@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bebe Bistrô Balneário Camboriú - Papinhas e Comidinhas Naturais Congeladas</title>
+    <meta property="og:title" content="Bebê Bistrô BC - Cardápio Digital">
+    <meta property="og:description" content="Cardápio digital, faça seu pedido aqui. Papinhas saudáveis em Balneário Camboriú!">
+    <meta property="og:image" content="https://yckinvfnyyxvfdysjrwe.supabase.co/storage/v1/object/public/Videos/Logo.jpg">
+    <meta property="og:url" content="https://bebe-bistro-bc.vercel.app/">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 
+                        brand: { 50: '#f7fee7', 100: '#ecfccb', 500: '#84cc16', 600: '#65a30d', 700: '#4d7c0f' },
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 800: '#1e293b', 900: '#0f172a' } 
+                    },
+                    fontFamily: { sans: ['Quicksand', 'sans-serif'] },
+                    borderRadius: { '4xl': '2rem', '5xl': '2.5rem' }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply font-sans bg-slate-50 text-slate-900;
+            }
+        }
+        @layer components {
+            .gradient-btn {
+                @apply bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 transition-all;
+            }
+            .category-btn.active {
+                @apply bg-brand-600 text-white border-brand-600 shadow-lg shadow-brand-600/20;
+            }
+            .product-card {
+                @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+            }
+            .no-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+            .no-scrollbar {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slideUp {
+            animation: slideUp 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <!-- Header Fixo -->
+    <header class="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-xl z-[100] border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="./index.html" class="flex items-center gap-3">
+                    <img src="https://lh3.googleusercontent.com/d/1rjEFadLsGMr6qA7osWtQkd-Ay6kGWOHD=w100" class="w-12 h-12 object-contain" alt="Logo">
+                    <div class="hidden sm:block">
+                        <h1 class="text-sm md:text-base font-bold text-slate-900 leading-tight">Bebe Bistrô Balneário Camboriú</h1>
+                        <p class="text-[10px] text-brand-600 font-bold uppercase tracking-wider">Papinhas e Comidinhas Naturais Congeladas</p>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="flex items-center gap-3 sm:gap-6">
+                <div id="header-total-preview" class="hidden sm:flex flex-col items-end">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Total</p>
+                    <p id="header-total-val" class="text-sm font-bold text-brand-600">R$ 0,00</p>
+                </div>
+
+                <div class="hidden md:block text-right">
+                    <p class="text-xs font-medium text-slate-400">Olá, bem-vinda!</p>
+                    <p id="shop-status-text" class="text-[10px] font-bold text-brand-600 uppercase">Loja Aberta</p>
+                </div>
+                
+                <nav class="flex items-center gap-2">
+                    <a href="https://www.instagram.com/bebebistrobc/" target="_blank" class="p-2 text-slate-300 hover:text-brand-600 transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </a>
+                    <a href="./admin.html" class="p-2 text-slate-300 hover:text-brand-600 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </a>
+                    <button onclick="window.location.hash = 'checkout';" class="relative p-3 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all group">
+                        <svg class="w-6 h-6 text-slate-600 group-hover:text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                        <span id="cart-badge" class="hidden absolute -top-1 -right-1 bg-brand-600 text-white text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">0</span>
+                    </button>
+                    <button onclick="window.location.hash = 'checkout';" class="gradient-btn text-white px-4 py-2 rounded-xl font-bold text-sm shadow-lg shadow-brand-500/20 hidden sm:block">
+                        Finalizar Pedido
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Espaçador para o Header Fixo -->
+    <div class="h-20"></div>
+
+    <!-- Hero Section com Vídeo Banner Responsivo -->
+    <section class="relative w-full bg-slate-900 overflow-hidden">
+        <!-- Vídeo de Fundo - Agora define a altura da seção -->
+        <video 
+            autoplay 
+            muted 
+            loop 
+            playsinline 
+            class="w-full h-auto block z-0"
+        >
+            <source src="https://yckinvfnyyxvfdysjrwe.supabase.co/storage/v1/object/public/Videos/Animacao%20banner%20grok.mp4" type="video/mp4">
+            Seu navegador não suporta vídeos.
+        </video>
+        
+        <!-- Overlay para Leitura -->
+        <div class="absolute inset-0 bg-slate-900/30 z-10"></div>
+
+        <!-- Conteúdo do Hero - Centralizado sobre o vídeo -->
+        <div class="absolute inset-0 z-20 flex items-center justify-center">
+            <div class="max-w-7xl mx-auto px-4 text-center space-y-2 sm:space-y-4 md:space-y-8">
+                <h2 class="text-lg sm:text-3xl md:text-5xl lg:text-7xl font-bold text-white drop-shadow-2xl leading-tight animate-slideUp">
+                    Alimentação Saudável<br>para seu Bebê
+                </h2>
+                
+                <p class="hidden sm:block text-white/90 max-w-2xl mx-auto text-xs md:text-lg font-medium drop-shadow-lg animate-slideUp" style="animation-delay: 0.1s">
+                    Praticidade e nutrição em cada potinho. Ingredientes frescos e selecionados para o crescimento do seu pequeno.
+                </p>
+                
+                <div class="hidden md:flex flex-wrap justify-center gap-4 pt-2 animate-slideUp" style="animation-delay: 0.2s">
+                    <div class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-xl border border-white/20 flex items-center gap-2">
+                        <span class="text-brand-600">🕒</span>
+                        <span class="text-xs font-bold text-slate-800" id="hero-hours-semana">Seg-Sex: Carregando...</span>
+                    </div>
+                    <div class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-xl border border-white/20 flex items-center gap-2">
+                        <span class="text-brand-600">📅</span>
+                        <span class="text-xs font-bold text-slate-800" id="hero-hours-sabado">Sáb: Carregando...</span>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex items-center justify-center animate-slideUp" style="animation-delay: 0.3s">
+                    <a href="https://www.instagram.com/bebebistrobc/" target="_blank" class="flex items-center gap-2 bg-white/90 backdrop-blur-md px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl shadow-lg border border-white/20 hover:bg-white transition-all group">
+                        <img src="https://lh3.googleusercontent.com/d/1E1I4mBIORPjAEp5lIYStEQagF4FiZJWP=w100" class="w-5 h-5 sm:w-8 sm:h-8 object-contain rounded-lg" alt="Instagram">
+                        <span class="text-[10px] sm:text-sm font-bold text-slate-700 group-hover:text-brand-600">Instagram</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categorias em Destaque -->
+    <section id="category-nav" class="sticky top-20 bg-white/80 backdrop-blur-md z-[90] py-4 border-b border-slate-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2" id="category-list">
+                <!-- Categorias via JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Container Principal -->
+    <main id="view-container" class="min-h-screen pb-40"></main>
+
+    <!-- Modal de Seleção de Unidade (Splash Screen) -->
+    <div id="unit-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[300] flex items-center justify-center p-4">
+        <div class="bg-white rounded-5xl w-full max-w-md p-10 shadow-2xl animate-slideUp text-center">
+            <img src="https://lh3.googleusercontent.com/d/1rjEFadLsGMr6qA7osWtQkd-Ay6kGWOHD=w200" class="w-24 h-24 mx-auto mb-6 object-contain" alt="Logo">
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">Bem-vinda ao Bebê Bistrô!</h2>
+            <p class="text-slate-500 mb-8">Para ver o cardápio correto, selecione a sua região:</p>
+            
+            <div class="space-y-4">
+                <button onclick="selectUnit('bc')" class="w-full py-5 rounded-2xl font-bold text-white gradient-btn shadow-xl shadow-brand-500/20 flex items-center justify-center gap-3 group">
+                    <span>Balneário Camboriú e Região</span>
+                    <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                </button>
+                <button onclick="selectUnit('blu')" class="w-full py-5 rounded-2xl font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all flex items-center justify-center gap-3 group">
+                    <span>Blumenau e Região</span>
+                    <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                </button>
+            </div>
+            
+            <p class="text-[10px] text-slate-400 mt-8 uppercase font-bold tracking-widest">Alimentação Saudável com Amor</p>
+        </div>
+    </div>
+
+    <!-- Modal de Combo (Placeholder para lógica futura) -->
+    <div id="combo-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] flex items-end sm:items-center justify-center p-4">
+        <div class="bg-white rounded-t-5xl sm:rounded-5xl w-full max-w-xl p-8 shadow-2xl animate-slideUp">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">Monte seu Combo</h2>
+                    <p id="combo-progress" class="text-sm font-bold text-brand-600 mt-1">Selecione mais 5 itens</p>
+                </div>
+                <button onclick="closeCombo()" class="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-slate-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div id="combo-items" class="space-y-4 max-h-[50vh] overflow-y-auto pr-2 no-scrollbar">
+                <!-- Itens do combo -->
+            </div>
+            <button id="confirm-combo" disabled class="w-full mt-8 py-5 rounded-2xl font-bold text-white bg-slate-200 cursor-not-allowed transition-all">Confirmar Seleção</button>
+        </div>
+    </div>
+
+    <!-- Modal de Informações -->
+    <div id="info-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+        <!-- ... conteúdo existente ... -->
+    </div>
+
+    <!-- Modal de Checkout (Sacola/Finalização) -->
+    <div id="checkout-modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] flex items-center justify-center p-0 sm:p-4">
+        <div id="checkout-modal-content" class="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-5xl shadow-2xl overflow-y-auto no-scrollbar animate-slideUp">
+            <!-- Conteúdo será inserido via JS -->
+        </div>
+    </div>
+
+    <script type="module" src="/src/index.ts"></script>
+</body>
+</html>

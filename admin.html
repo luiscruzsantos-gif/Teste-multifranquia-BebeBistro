@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Bebê Bistrô BC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 
+                        brand: { 50: '#f7fee7', 100: '#ecfccb', 500: '#84cc16', 600: '#65a30d', 700: '#4d7c0f' },
+                        slate: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 800: '#1e293b', 900: '#0f172a' } 
+                    },
+                    fontFamily: { quicksand: ['Quicksand', 'sans-serif'] },
+                    borderRadius: { '4xl': '2rem', '5xl': '2.5rem' }
+                }
+            }
+        }
+    </script>
+    <style> 
+        body { font-family: 'Quicksand', sans-serif; background-color: #ffffff; } 
+        .gradient-btn { background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%); } 
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="text-slate-800 bg-slate-50">
+
+    <div id="login-overlay" class="fixed inset-0 bg-slate-900 z-[200] flex items-center justify-center p-6">
+        <div class="bg-white rounded-5xl p-10 w-full max-w-md text-center space-y-8 shadow-2xl">
+            <div class="flex flex-col items-center gap-4">
+                <img src="https://lh3.googleusercontent.com/d/1rjEFadLsGMr6qA7osWtQkd-Ay6kGWOHD=w100" class="w-16 h-16 object-contain">
+                <h2 class="text-2xl font-bold text-slate-900">Gestão Bebê Bistrô</h2>
+            </div>
+            <div class="space-y-4">
+                <select id="admin-unit" class="w-full bg-slate-50 p-5 rounded-2xl ring-2 ring-slate-100 outline-none text-center font-bold focus:ring-brand-500/20 transition-all appearance-none">
+                    <option value="bc">Balneário Camboriú</option>
+                    <option value="blu">Blumenau</option>
+                </select>
+                <input id="admin-pass" type="password" placeholder="Senha mestra" class="w-full bg-slate-50 p-5 rounded-2xl ring-2 ring-slate-100 outline-none text-center font-bold focus:ring-brand-500/20 transition-all">
+                <button onclick="check()" class="w-full gradient-btn text-white py-5 rounded-2xl font-bold shadow-xl shadow-brand-600/20">Acessar Painel</button>
+            </div>
+            <a href="./index.html" class="block text-slate-400 text-sm font-bold hover:text-slate-600 transition-colors">Voltar ao Cardápio</a>
+        </div>
+    </div>
+
+    <div id="main-admin" class="hidden min-h-screen">
+        <header class="bg-white p-6 shadow-sm flex flex-col sm:flex-row justify-between items-center sticky top-0 z-40 gap-4">
+            <div class="flex items-center gap-3">
+                <img src="https://lh3.googleusercontent.com/d/1rjEFadLsGMr6qA7osWtQkd-Ay6kGWOHD=w100" class="w-10 h-10 object-contain">
+                <h1 class="font-bold text-xl">Painel Administrativo</h1>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl">
+                <button onclick="setActiveTab('products')" id="tab-products" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all">Produtos</button>
+                <button onclick="setActiveTab('orders')" id="tab-orders" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all">Pedidos</button>
+                <button onclick="setActiveTab('reports')" id="tab-reports" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all">Relatórios</button>
+                <button onclick="setActiveTab('performance')" id="tab-performance" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all">Performance</button>
+                <button onclick="setActiveTab('configs')" id="tab-configs" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all">Configurações</button>
+                
+                <button onclick="toggleSound()" id="btn-sound" class="p-2.5 text-slate-400 hover:bg-slate-100 rounded-xl transition-all" title="Notificação Sonora">
+                    <svg id="icon-sound-on" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                    <svg id="icon-sound-off" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                </button>
+
+                <button onclick="logout()" class="ml-2 p-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                </button>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto p-6 space-y-8 animate-fadeIn">
+            <div id="products-view" class="space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-slate-900">Catálogo de Produtos</h2>
+                    <button onclick="addProduct()" class="flex items-center gap-2 bg-brand-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-brand-600/20 hover:bg-brand-700 transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        Novo Produto
+                    </button>
+                </div>
+                
+                <div class="bg-white rounded-4xl shadow-sm overflow-hidden border border-slate-100">
+                    <div id="admin-container"></div>
+                </div>
+            </div>
+
+            <div id="orders-view" class="hidden space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+                            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                <span class="w-3 h-3 bg-orange-500 rounded-full animate-pulse"></span>
+                                Pendentes
+                            </h2>
+                            <span id="count-pendentes" class="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-xs font-bold">0</span>
+                        </div>
+                        <div id="orders-pendentes" class="space-y-4 min-h-[200px]"></div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+                            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                <span class="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></span>
+                                Preparando
+                            </h2>
+                            <span id="count-preparando" class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">0</span>
+                        </div>
+                        <div id="orders-preparando" class="space-y-4 min-h-[200px]"></div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+                            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
+                                Confirmados
+                            </h2>
+                            <span id="count-confirmados" class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold">0</span>
+                        </div>
+                        <div id="orders-confirmados" class="space-y-4 min-h-[200px]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="configs-view" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Configs -->
+            </div>
+
+            <div id="reports-view" class="hidden space-y-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <h2 class="text-3xl font-bold text-slate-900">Financeiro</h2>
+                    <button onclick="exportToCSV()" class="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-5 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Exportar
+                    </button>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="relative group">
+                        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z" /></svg>
+                        </div>
+                        <select id="report-period" onchange="handlePeriodChange(this.value)" class="bg-white border border-slate-200 pl-11 pr-10 py-2.5 rounded-full text-sm font-bold appearance-none outline-none focus:ring-2 focus:ring-brand-500/20 transition-all shadow-sm">
+                            <option value="today">Hoje</option>
+                            <option value="week">Esta Semana</option>
+                            <option value="month" selected>Este Mês</option>
+                            <option value="custom">Personalizado</option>
+                        </select>
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </div>
+                    </div>
+                    
+                    <div id="custom-dates" class="hidden flex items-center gap-2 animate-slideUp">
+                        <input type="date" id="date-start" onchange="renderReports()" class="bg-white border border-slate-200 px-4 py-2 rounded-full text-xs font-bold outline-none shadow-sm">
+                        <span class="text-slate-300 text-xs font-bold">até</span>
+                        <input type="date" id="date-end" onchange="renderReports()" class="bg-white border border-slate-200 px-4 py-2 rounded-full text-xs font-bold outline-none shadow-sm">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-slate-800">Faturamento</h3>
+                        <button onclick="showDetailedFinancialReport()" class="text-brand-600 text-sm font-bold hover:underline">Ver detalhes</button>
+                    </div>
+                    
+                    <!-- KPI Cards (iFood Style) -->
+                    <div id="report-kpis" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4"></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 pt-8">
+                    <!-- Gráfico Semanal -->
+                    <div class="bg-white p-8 rounded-4xl shadow-sm border border-slate-100 space-y-6">
+                        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10m14 0v-4a2 2 0 00-2-2h-2a2 2 0 00-2 2v4a2 2 0 002 2h2a2 2 0 002-2zm0 0V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14" /></svg>
+                            Desempenho Diário
+                        </h3>
+                        <div class="space-y-4">
+                            <div id="chart-legend" class="flex justify-center gap-4 text-[10px] font-bold uppercase tracking-wider"></div>
+                            <div id="chart-weekly" class="h-64 flex items-end gap-4 pt-8 relative"></div>
+                        </div>
+                    </div>
+
+                    <!-- Top Produtos -->
+                    <div class="bg-white p-8 rounded-4xl shadow-sm border border-slate-100 space-y-6">
+                        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" /></svg>
+                            Top 5 Produtos
+                        </h3>
+                        <div id="top-products" class="space-y-4"></div>
+                    </div>
+
+                    <!-- Ranking de Clientes -->
+                    <div class="bg-white p-8 rounded-4xl shadow-sm border border-slate-100 space-y-6">
+                        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                            Ranking de Clientes
+                        </h3>
+                        <div id="top-customers" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="performance-view" class="hidden space-y-8">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Relatórios de Performance</h2>
+                        <p class="text-sm text-slate-500 font-medium">Análise de CMV, Margem e Lucratividade</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="relative group">
+                            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z" /></svg>
+                            </div>
+                            <select id="perf-period" onchange="handlePerfPeriodChange(this.value)" class="bg-white border border-slate-200 pl-11 pr-10 py-2.5 rounded-full text-sm font-bold appearance-none outline-none focus:ring-2 focus:ring-brand-500/20 transition-all shadow-sm">
+                                <option value="today">Hoje</option>
+                                <option value="week">Esta Semana</option>
+                                <option value="month" selected>Este Mês</option>
+                                <option value="custom">Personalizado</option>
+                            </select>
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                        </div>
+                        
+                        <div id="perf-custom-dates" class="hidden flex items-center gap-2 animate-slideUp">
+                            <input type="date" id="perf-date-start" onchange="renderPerformanceReport()" class="bg-white border border-slate-200 px-4 py-2 rounded-full text-xs font-bold outline-none shadow-sm">
+                            <span class="text-slate-300 text-xs font-bold">até</span>
+                            <input type="date" id="perf-date-end" onchange="renderPerformanceReport()" class="bg-white border border-slate-200 px-4 py-2 rounded-full text-xs font-bold outline-none shadow-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div id="perf-kpis" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Top 5 Lucratividade -->
+                    <div class="bg-white p-8 rounded-4xl shadow-sm border border-slate-100 space-y-6">
+                        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                            Top 5 Produtos por Lucratividade
+                        </h3>
+                        <div id="perf-top-products" class="space-y-4"></div>
+                    </div>
+
+                    <!-- Detalhes de CMV por Categoria -->
+                    <div class="bg-white p-8 rounded-4xl shadow-sm border border-slate-100 space-y-6">
+                        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a2 2 0 00-2-2H5a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10m14 0v-4a2 2 0 00-2-2h-2a2 2 0 00-2 2v4a2 2 0 002 2h2a2 2 0 002-2zm0 0V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14" /></svg>
+                            Distribuição de Custos (CMV)
+                        </h3>
+                        <div id="perf-cmv-dist" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="modal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
+        <div id="modal-content" class="bg-white rounded-5xl w-full max-w-2xl p-10 shadow-2xl overflow-y-auto max-h-[90vh] no-scrollbar"></div>
+    </div>
+
+    <script>
+        const MASTER = '10203040Bella';
+        const SUPABASE_URL = 'https://yckinvfnyyxvfdysjrwe.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2ludmZueXl4dmZkeXNqcndlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MTIzNzQsImV4cCI6MjA4NzA4ODM3NH0.D9m-iDskrB1WvLx7DtfEO4ihHKGDtDJSuMnee3wTzSQ';
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let products = [];
+        let configs = [];
+        let orders = []; // New state for orders
+        let activeTab = 'orders';
+        let soundEnabled = localStorage.getItem('admin_sound') !== 'false'; // Default to true
+        let lastOrderCount = -1;
+        const orderSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('admin_sound', soundEnabled.toString());
+            updateSoundUI();
+            if (soundEnabled) {
+                orderSound.play().catch(e => console.log("Audio unlock failed:", e));
+            }
+        }
+
+        function updateSoundUI() {
+            const on = document.getElementById('icon-sound-on');
+            const off = document.getElementById('icon-sound-off');
+            const btn = document.getElementById('btn-sound');
+            
+            if (soundEnabled) {
+                on.classList.remove('hidden');
+                off.classList.add('hidden');
+                btn.classList.add('text-brand-600', 'bg-brand-50');
+                btn.classList.remove('text-slate-400', 'bg-transparent');
+            } else {
+                on.classList.add('hidden');
+                off.classList.remove('hidden');
+                btn.classList.remove('text-brand-600', 'bg-brand-50');
+                btn.classList.add('text-slate-400', 'bg-transparent');
+            }
+        }
+
+        const driveImg = (input, width = 300) => {
+            if (!input) return `https://via.placeholder.com/${width}x${width}?text=IMG`;
+            
+            // Aplica transformações APENAS se for Supabase
+            if (input.includes('supabase.co')) {
+                return `${input}?width=${width}&height=${width}&resize=contain&quality=80&format=webp`;
+            }
+
+            // Se for link do Google Drive ou apenas o ID, usa o proxy lh3 para exibir a imagem
+            if (input.includes('drive.google.com') || !input.startsWith('http')) {
+                const idMatch = input.match(/[-\w]{25,}/);
+                const id = idMatch ? idMatch[0] : input;
+                return `https://lh3.googleusercontent.com/d/${id}=w100`;
+            }
+
+            // Outros links externos retornam sem alteração
+            return input;
+        };
+
+        function check() {
+            const pass = document.getElementById('admin-pass').value;
+            const unit = document.getElementById('admin-unit').value;
+
+            if (pass === MASTER) { 
+                sessionStorage.setItem('auth', '1'); 
+                sessionStorage.setItem('admin_unit', unit);
+                init(); 
+            } else alert('Senha incorreta!'); 
+        }
+        
+        function logout() { 
+            sessionStorage.clear(); 
+            location.reload(); 
+        }
+
+        async function init() {
+            if (sessionStorage.getItem('auth') !== '1') return;
+            const unit = sessionStorage.getItem('admin_unit') || 'bc';
+            try {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('main-admin').style.display = 'block';
+                
+                const { data: pData } = await sb.from('produtos').select('*').eq('unidade', unit).order('nome');
+                const { data: cData } = await sb.from('config').select('*').eq('unidade', unit);
+                
+                if (pData) products = pData;
+                if (cData) configs = cData;
+                
+                const { data: oData } = await sb.from('pedidos').select('*').eq('unidade', unit).order('codigo', { ascending: false });
+                if (oData) orders = oData;
+
+                render();
+                renderConfigs();
+                renderOrders(); // Render orders
+                setActiveTab(activeTab);
+                updateSoundUI();
+
+                // Real-time updates
+                sb.channel('custom-all-channel')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => {
+                        checkNewOrders();
+                    })
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'produtos' }, async () => {
+                        const unit = sessionStorage.getItem('admin_unit') || 'bc';
+                        const { data } = await sb.from('produtos').select('*').eq('unidade', unit).order('nome');
+                        if (data) {
+                            products = data;
+                            render();
+                        }
+                    })
+                    .subscribe();
+
+                // Iniciar monitoramento de novos pedidos
+                setInterval(() => {
+                    if (sessionStorage.getItem('auth') === '1') {
+                        checkNewOrders();
+                    }
+                }, 60000); // A cada 60 segundos (fallback)
+
+            } catch (error) {
+                console.error("Erro na inicialização do painel admin:", error);
+                alert("Erro ao carregar o painel administrativo. Verifique o console para detalhes.");
+                // Optionally, log out or show a specific error message to the user
+                sessionStorage.clear();
+                location.reload();
+            }
+        }
+
+        function setActiveTab(tab) {
+            activeTab = tab;
+            document.getElementById('products-view').classList.toggle('hidden', tab !== 'products');
+            document.getElementById('configs-view').classList.toggle('hidden', tab !== 'configs');
+            document.getElementById('orders-view').classList.toggle('hidden', tab !== 'orders');
+            document.getElementById('reports-view').classList.toggle('hidden', tab !== 'reports');
+            document.getElementById('performance-view').classList.toggle('hidden', tab !== 'performance');
+            
+            if (tab === 'orders') {
+                renderOrders();
+            }
+            if (tab === 'reports') {
+                renderReports();
+            }
+            if (tab === 'performance') {
+                renderPerformanceReport();
+            }
+            
+            const pBtn = document.getElementById('tab-products');
+            const oBtn = document.getElementById('tab-orders');
+            const cBtn = document.getElementById('tab-configs');
+            const rBtn = document.getElementById('tab-reports');
+            const pfBtn = document.getElementById('tab-performance');
+            
+            // Reset all buttons to default style
+            [pBtn, oBtn, cBtn, rBtn, pfBtn].forEach(btn => {
+                if (btn) btn.className = 'px-6 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 transition-all';
+            });
+
+            // Highlight active button
+            const activeBtn = document.getElementById(`tab-${tab}`);
+            if (activeBtn) {
+                activeBtn.className = 'px-6 py-2.5 rounded-xl text-sm font-bold bg-white shadow-sm text-brand-600 transition-all';
+            }
+        }
+
+        function render() {
+            const container = document.getElementById('admin-container');
+            
+            if (products.length === 0) {
+                container.innerHTML = '<div class="p-8 text-center text-slate-500 font-bold">Nenhum produto cadastrado.</div>';
+                return;
+            }
+
+            const catLabels = {
+                'combos': 'Combos',
+                'doces-6': 'Doces',
+                'papinhas-6': '6-8 Meses',
+                'papinhas-8': '8-12 Meses',
+                'comidinhas-12': '1 a 3 anos'
+            };
+
+            const grouped = products.reduce((acc, p, index) => {
+                let cat = p.categoria ? p.categoria.toLowerCase().trim() : 'outros';
+                if (cat === 'combo') cat = 'combos';
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push({ p, index });
+                return acc;
+            }, {});
+
+            const order = ['combos', 'doces-6', 'papinhas-6', 'papinhas-8', 'comidinhas-12', 'outros'];
+            const sortedKeys = Object.keys(grouped).sort((a, b) => {
+                const idxA = order.indexOf(a);
+                const idxB = order.indexOf(b);
+                if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+                if (idxA === -1) return 1;
+                if (idxB === -1) return -1;
+                return idxA - idxB;
+            });
+
+            let html = '';
+            for (const cat of sortedKeys) {
+                const items = grouped[cat];
+                const catName = catLabels[cat] || cat.toUpperCase();
+                
+                html += `
+                <div class="bg-slate-50/80 px-6 py-4 border-b border-slate-100 flex items-center justify-between sticky top-0 z-10 backdrop-blur-sm">
+                    <h3 class="font-bold text-slate-700 uppercase tracking-widest text-[11px]">${catName}</h3>
+                    <span class="text-[10px] font-bold text-slate-400 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-sm">${items.length} itens</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-white border-b text-[10px] uppercase text-slate-400 font-bold tracking-widest hidden sm:table-header-group">
+                            <tr>
+                                <th class="p-4 sm:p-6">Produto</th>
+                                <th class="p-4 sm:p-6 text-center">Preço</th>
+                                <th class="p-4 sm:p-6 text-center">Estoque</th>
+                                <th class="p-4 sm:p-6 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50 bg-white">
+                            ${items.map(({p, index}) => `
+                            <tr class="hover:bg-slate-50/50 transition-colors flex flex-col sm:table-row">
+                                <td class="p-4 sm:p-6">
+                                    <div class="flex items-center gap-4">
+                                        <img src="${driveImg(p.imagem_url, 100)}" class="w-14 h-14 rounded-2xl object-cover border border-slate-100 shadow-sm">
+                                        <div>
+                                            <div class="font-bold text-slate-900">${p.nome}</div>
+                                            <div class="text-[10px] text-brand-600 font-bold uppercase tracking-wider sm:hidden mt-1">R$ ${Number(p.preco).toFixed(2)} • ${p.estoque} un</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="p-4 sm:p-6 text-center font-bold text-slate-700 hidden sm:table-cell">R$ ${Number(p.preco).toFixed(2)}</td>
+                                <td class="p-4 sm:p-6 text-center hidden sm:table-cell">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button onclick="updateStock(${index}, -1)" class="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all font-bold">-</button>
+                                        <span class="px-4 py-1.5 ${p.estoque > 0 ? 'bg-brand-50 text-brand-700' : 'bg-red-50 text-red-600'} rounded-full font-bold text-xs min-w-[60px]">
+                                            ${p.estoque} un
+                                        </span>
+                                        <button onclick="updateStock(${index}, 1)" class="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-xl text-slate-400 hover:bg-brand-50 hover:text-brand-600 transition-all font-bold">+</button>
+                                    </div>
+                                </td>
+                                <td class="p-4 sm:p-6 text-right border-t border-slate-50 sm:border-0 mt-2 sm:mt-0">
+                                    <div class="flex justify-end gap-2">
+                                        <button onclick="edit(${index})" class="p-2.5 bg-white border border-slate-100 shadow-sm rounded-xl hover:bg-slate-50 transition-all text-slate-600">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                        </button>
+                                        <button onclick="del(${p.id})" class="p-2.5 bg-white border border-slate-100 shadow-sm rounded-xl hover:bg-red-50 hover:text-red-500 transition-all text-slate-400">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function renderConfigs() {
+            const container = document.getElementById('configs-view');
+            
+            const getConfig = (key) => configs.find(c => c.key === key)?.value || '';
+            const isPaused = getConfig('loja_pausada') === 'true';
+
+            container.innerHTML = `
+                <!-- Status da Loja -->
+                <div class="bg-white p-8 rounded-4xl shadow-sm border border-slate-100 space-y-6 md:col-span-2 lg:col-span-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 ${isPaused ? 'bg-red-50 text-red-600' : 'bg-brand-50 text-brand-600'} rounded-2xl flex items-center justify-center transition-colors">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-900">Status de Operação</h3>
+                                <p class="text-xs text-slate-400 font-medium">${isPaused ? 'A loja está pausada e não aceita novos pedidos.' : 'A loja está operando normalmente.'}</p>
+                            </div>
+                        </div>
+                        <button onclick="toggleStorePause(${isPaused})" class="px-8 py-4 rounded-2xl font-bold text-sm transition-all shadow-lg ${isPaused ? 'bg-brand-600 text-white shadow-brand-600/20' : 'bg-red-500 text-white shadow-red-500/20'}">
+                            ${isPaused ? 'Retomar Operações' : 'Pausar Loja Agora'}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Horários -->
+                <div class="bg-white p-8 rounded-4xl shadow-sm border border-slate-100 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Segunda a Sexta</label>
+                    </div>
+                    <div class="space-y-3">
+                        <textarea id="cfg-horario_semana" placeholder="Ex: 09:00-12:00, 14:00-18:00" class="w-full bg-slate-50 p-5 rounded-2xl outline-none ring-2 ring-transparent focus:ring-brand-500/20 font-bold transition-all h-24 no-scrollbar">${getConfig('horario_semana')}</textarea>
+                        <button onclick="saveConfig('horario_semana')" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all">Salvar Horário</button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-4xl shadow-sm border border-slate-100 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sábados</label>
+                    </div>
+                    <div class="space-y-3">
+                        <textarea id="cfg-horario_sabado" placeholder="Ex: 09:00-13:00" class="w-full bg-slate-50 p-5 rounded-2xl outline-none ring-2 ring-transparent focus:ring-brand-500/20 font-bold transition-all h-24 no-scrollbar">${getConfig('horario_sabado')}</textarea>
+                        <button onclick="saveConfig('horario_sabado')" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all">Salvar Horário</button>
+                    </div>
+                </div>
+
+                <!-- Período de Ausência -->
+                <div class="bg-white p-8 rounded-4xl shadow-sm border border-slate-100 space-y-6 md:col-span-2 lg:col-span-3">
+                    <div class="flex items-center gap-3 border-b border-slate-50 pb-4">
+                        <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900">Período de Ausência</h3>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Férias ou Loja Fechada</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Início da Ausência</label>
+                            <input type="date" id="cfg-ausencia_inicio" value="${getConfig('ausencia_inicio')}" class="w-full bg-slate-50 p-5 rounded-2xl outline-none ring-2 ring-transparent focus:ring-brand-500/20 font-bold transition-all">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Fim da Ausência</label>
+                            <input type="date" id="cfg-ausencia_fim" value="${getConfig('ausencia_fim')}" class="w-full bg-slate-50 p-5 rounded-2xl outline-none ring-2 ring-transparent focus:ring-brand-500/20 font-bold transition-all">
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <button onclick="saveAbsencePeriod()" class="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-all">Salvar Período</button>
+                        <button onclick="clearAbsencePeriod()" class="bg-slate-100 text-slate-500 px-8 py-4 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all">Limpar</button>
+                    </div>
+                    
+                    <p class="text-[10px] text-slate-400 font-medium italic">* Durante este período, os clientes não conseguirão agendar entregas no site.</p>
+                </div>
+            `;
+        }
+
+        async function saveAbsencePeriod() {
+            const inicio = document.getElementById('cfg-ausencia_inicio').value;
+            const fim = document.getElementById('cfg-ausencia_fim').value;
+            
+            if (!inicio || !fim) {
+                alert("Por favor, preencha ambas as datas.");
+                return;
+            }
+            
+            if (new Date(inicio) > new Date(fim)) {
+                alert("A data de início não pode ser posterior à data de fim.");
+                return;
+            }
+
+            const unit = sessionStorage.getItem('admin_unit') || 'bc';
+            const { error: err1 } = await sb.from('config').upsert({ key: 'ausencia_inicio', value: inicio, unidade: unit }, { onConflict: 'key,unidade' });
+            const { error: err2 } = await sb.from('config').upsert({ key: 'ausencia_fim', value: fim, unidade: unit }, { onConflict: 'key,unidade' });
+            
+            if (err1 || err2) {
+                alert("Erro ao salvar período de ausência.");
+            } else {
+                alert("Período de ausência salvo com sucesso!");
+                init();
+            }
+        }
+
+        async function clearAbsencePeriod() {
+            const unit = sessionStorage.getItem('admin_unit') || 'bc';
+            const { error: err1 } = await sb.from('config').upsert({ key: 'ausencia_inicio', value: '', unidade: unit }, { onConflict: 'key,unidade' });
+            const { error: err2 } = await sb.from('config').upsert({ key: 'ausencia_fim', value: '', unidade: unit }, { onConflict: 'key,unidade' });
+            
+            if (err1 || err2) {
+                alert("Erro ao limpar período.");
+            } else {
+                alert("Período de ausência removido.");
+                init();
+            }
+        }
+
+        async function toggleStorePause(currentStatus) {
+            const unit = sessionStorage.getItem('admin_unit') || 'bc';
+            const newVal = !currentStatus ? 'true' : 'false';
+            const { error } = await sb.from('config').upsert({ key: 'loja_pausada', value: newVal, unidade: unit }, { onConflict: 'key,unidade' });
+            
+            if (error) {
+                console.error("Erro ao pausar:", error);
+                alert("Erro ao alterar status: " + (error.message || "Erro desconhecido"));
+            } else {
+                init();
+            }
+        }
+
+        async function saveConfig(key) {
+            const unit = sessionStorage.getItem('admin_unit') || 'bc';
+            const val = document.getElementById(`cfg-${key}`).value;
+            // Usando upsert para garantir que a chave seja criada se não existir
+            const { error } = await sb.from('config').upsert({ key: key, value: val, unidade: unit }, { onConflict: 'key,unidade' });
+            
+            if (error) {
+                console.error("Erro ao salvar config:", error);
+                alert("Erro ao salvar: " + (error.message || "Erro desconhecido") + "\n\nVerifique as permissões RLS da tabela 'config'.");
+            } else {
+                init();
+            }
+        }
+
+        async function addProduct() {
+            const unit = sessionStorage.getItem('admin_unit') || 'bc';
+            const { data, error } = await sb.from('produtos').insert([{ nome: 'Novo Produto', preco: 0, estoque: 0, categoria: 'papinhas-6', unidade: unit }]).select();
+            if (!error) init();
+        }
+
+        async function del(id) {
+            if (!confirm('Excluir produto permanentemente?')) return;
+            const { error } = await sb.from('produtos').delete().eq('id', id);
+            if (!error) init();
+        }
+
+        async function updateStock(idx, delta) {
+            const p = products[idx];
+            const newStock = Math.max(0, p.estoque + delta);
+            if (newStock === p.estoque) return;
+            
+            try {
+                const { error } = await sb.from('produtos').update({ estoque: newStock }).eq('id', p.id);
+                if (error) throw error;
+                p.estoque = newStock;
+                render();
+            } catch (e) {
+                console.error("Erro ao atualizar estoque:", e);
+                alert("Erro ao atualizar estoque.");
+            }
+        }
+
+        function edit(idx) {
+            const p = products[idx];
+            document.getElementById('modal-content').innerHTML = `
+                <div class="flex justify-between items-center mb-10 border-b border-slate-50 pb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Editar Produto</h2>
+                        <p class="text-xs text-slate-400 font-medium mt-1">ID: #${p.id}</p>
+                    </div>
+                    <button onclick="closeModal()" class="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-600 transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <label class="text-[10px] font-bold block mb-2 text-slate-400 uppercase tracking-widest">Nome do Produto</label>
+                        <input id="m-nome" type="text" value="${p.nome}" class="w-full bg-slate-50 p-5 rounded-2xl border-2 border-transparent focus:border-brand-500/20 outline-none font-bold transition-all">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold block mb-2 text-slate-400 uppercase tracking-widest">Preço (R$)</label>
+                        <input id="m-preco" type="number" step="0.01" value="${p.preco}" class="w-full bg-slate-50 p-5 rounded-2xl border-2 border-transparent focus:border-brand-500/20 outline-none font-bold transition-all">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold block mb-2 text-slate-400 uppercase tracking-widest">Estoque (UN)</label>
+                        <input id="m-estoque" type="number" value="${p.estoque}" class="w-full bg-slate-50 p-5 rounded-2xl border-2 border-transparent focus:border-brand-500/20 outline-none font-bold transition-all">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-[10px] font-bold block mb-2 text-slate-400 uppercase tracking-widest">Categoria</label>
+                        <select id="m-cat" class="w-full bg-slate-50 p-5 rounded-2xl border-2 border-transparent focus:border-brand-500/20 outline-none font-bold transition-all appearance-none">
+                            <option value="combos" ${p.categoria === 'combos' || p.categoria === 'combo' ? 'selected' : ''}>Combos</option>
+                            <option value="doces-6" ${p.categoria === 'doces-6' ? 'selected' : ''}>Doces</option>
+                            <option value="papinhas-6" ${p.categoria === 'papinhas-6' ? 'selected' : ''}>6–8 meses</option>
+                            <option value="papinhas-8" ${p.categoria === 'papinhas-8' ? 'selected' : ''}>8–12 meses</option>
+                            <option value="comidinhas-12" ${p.categoria === 'comidinhas-12' ? 'selected' : ''}>1 a 3 anos</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-[10px] font-bold block mb-2 text-slate-400 uppercase tracking-widest">Peso (ex: 200g)</label>
+                        <input id="m-peso" type="text" value="${p.peso || ''}" class="w-full bg-slate-50 p-5 rounded-2xl border-2 border-transparent focus:border-brand-500/20 outline-none font-bold transition-all">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-[10px] font-bold block mb-2 text-slate-400 uppercase tracking-widest">Ingredientes</label>
+                        <textarea id="m-ingredientes" class="w-full bg-slate-50 p-5 rounded-2xl border-2 border-transparent focus:border-brand-500/20 outline-none font-medium h-32 transition-all">${p.ingredientes || ''}</textarea>
+                    </div>
+                    <div class="md:col-span-2 space-y-4">
+                        <label class="text-[10px] font-bold block mb-2 text-slate-400 uppercase tracking-widest">Imagem do Produto</label>
+                        <div class="flex items-center gap-6 p-6 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 hover:border-brand-500/20 transition-all">
+                            <div id="m-preview-container" class="w-24 h-24 rounded-2xl bg-white border border-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                ${p.imagem_url ? `<img src="${driveImg(p.imagem_url, 100)}" class="w-full h-full object-cover">` : `<svg class="w-8 h-8 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>`}
+                            </div>
+                            <div class="flex-1 space-y-2">
+                                <input id="m-file" type="file" accept="image/*" onchange="handleFileSelect(event)" class="hidden">
+                                <button onclick="document.getElementById('m-file').click()" class="bg-white px-4 py-2 rounded-xl text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-all">Selecionar Foto</button>
+                                <p class="text-[10px] text-slate-400 font-medium">PNG, JPG ou WEBP (Máx. 2MB)</p>
+                            </div>
+                        </div>
+                        <input id="m-img-url" type="hidden" value="${p.imagem_url || ''}">
+                    </div>
+                </div>
+                <button onclick="save(${idx})" class="w-full gradient-btn text-white py-6 rounded-3xl font-bold shadow-xl shadow-brand-600/20 mt-12 transition-all">Salvar Alterações</button>`;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        async function checkNewOrders() {
+            const unit = sessionStorage.getItem('admin_unit') || 'bc';
+            const { data } = await sb
+                .from('pedidos')
+                .select('id')
+                .eq('unidade', unit)
+                .neq('status', 'cancelado');
+            
+            const count = data ? data.length : 0;
+            
+            if (lastOrderCount !== -1 && count > lastOrderCount && soundEnabled) {
+                orderSound.play().catch(e => console.log("Erro ao tocar som:", e));
+                // Se estiver na aba de pedidos, atualiza a lista
+                if (activeTab === 'orders') renderOrders();
+                if (activeTab === 'reports') renderReports();
+            }
+            lastOrderCount = count;
+        }
+
+        function handlePeriodChange(period) {
+            const customDates = document.getElementById('custom-dates');
+            if (period === 'custom') {
+                customDates.classList.remove('hidden');
+            } else {
+                customDates.classList.add('hidden');
+                renderReports();
+            }
+        }
+
+        const CMV_MAP = {
+            'doces': 4.25,
+            'doces-6': 4.25,
+            'papinhas-6': 4.20,
+            'papinhas-8': 6.20,
+            'comidinhas-12': 10.65
+        };
+
+        function calculateFinancialData(filteredOrders) {
+            let faturamentoBruto = 0;
+            let faturamentoLiquido = 0;
+            let totalCMV = 0;
+            let totalShipping = 0;
+            let totalDiscounts = 0;
+            let totalProducts = 0;
+            const productStats = {};
+            const cmvByCategory = { 'doces': 0, 'doces-6': 0, 'papinhas-6': 0, 'papinhas-8': 0, 'comidinhas-12': 0 };
+
+            filteredOrders.forEach(o => {
+                const subtotal = Number(o.total);
+                const taxa = Number(o.taxa_entrega || 0);
+                const desc = Number(o.desconto || 0);
+                
+                totalProducts += subtotal;
+                totalShipping += taxa;
+                totalDiscounts += desc;
+
+                faturamentoBruto += (subtotal + taxa - desc);
+                faturamentoLiquido += (subtotal - desc);
+
+                o.itens.forEach(item => {
+                    let itemCMV = 0;
+                    if (item.subitens && item.subitens.length > 0) {
+                        item.subitens.forEach(sub => {
+                            const pInfo = products.find(p => p.id === sub.id);
+                            const cat = pInfo ? pInfo.categoria : sub.categoria;
+                            const cost = (CMV_MAP[cat] || 0) * sub.qty;
+                            itemCMV += cost;
+                            if (cat && cmvByCategory[cat] !== undefined) {
+                                cmvByCategory[cat] += (cost * item.qty);
+                            }
+                        });
+                    } else {
+                        const pInfo = products.find(p => p.id === item.id);
+                        const cat = pInfo ? pInfo.categoria : item.categoria;
+                        const cost = (CMV_MAP[cat] || 0);
+                        itemCMV = cost;
+                        if (cat && cmvByCategory[cat] !== undefined) {
+                            cmvByCategory[cat] += (cost * item.qty);
+                        }
+                    }
+
+                    const totalCostForItem = itemCMV * item.qty;
+                    totalCMV += totalCostForItem;
+
+                    if (!productStats[item.nome]) {
+                        productStats[item.nome] = { nome: item.nome, receita: 0, custo: 0, lucro: 0, qty: 0 };
+                    }
+                    
+                    productStats[item.nome].receita += (item.preco * item.qty);
+                    productStats[item.nome].custo += totalCostForItem;
+                    productStats[item.nome].lucro += (item.preco * item.qty) - totalCostForItem;
+                    productStats[item.nome].qty += item.qty;
+                });
+            });
+
+            return {
+                faturamentoBruto,
+                faturamentoLiquido,
+                totalCMV,
+                totalShipping,
+                totalDiscounts,
+                totalProducts,
+                lucroLiquido: faturamentoLiquido - totalCMV,
+                productStats,
+                cmvByCategory
+            };
+        }
+
+        function handlePerfPeriodChange(val) {
+            document.getElementById('perf-custom-dates').classList.toggle('hidden', val !== 'custom');
+            if (val !== 'custom') renderPerformanceReport();
+        }
+
+        function renderPerformanceReport() {
+            const period = document.getElementById('perf-period').value;
+            const startInput = document.getElementById('perf-date-start').value;
+            const endInput = document.getElementById('perf-date-end').value;
+
+            let startDate, endDate;
+            const now = new Date();
+
+            if (period === 'today') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            } else if (period === 'week') {
+                const day = now.getDay();
+                const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+                startDate = new Date(now.setDate(diff));
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date();
+                endDate.setHours(23, 59, 59, 999);
+            } else if (period === 'month') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            } else if (period === 'custom') {
+                if (!startInput || !endInput) return;
+                startDate = new Date(startInput);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(endInput);
+                endDate.setHours(23, 59, 59, 999);
+            }
+
+            const filtered = orders.filter(o => {
+                const date = new Date(o.created_at);
+                return date >= startDate && date <= endDate && o.status === 'confirmado';
+            });
+
+            const data = calculateFinancialData(filtered);
+
+            // Render KPIs
+            document.getElementById('perf-kpis').innerHTML = `
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-3 border-l-4 border-l-blue-500">
+                    <div class="flex items-center gap-2 text-slate-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span class="text-xs font-bold uppercase tracking-wider">Faturamento Bruto</span>
+                    </div>
+                    <p class="text-3xl font-bold text-slate-900">R$ ${data.faturamentoBruto.toFixed(2)}</p>
+                    <p class="text-[10px] text-slate-400 font-medium">Produtos + Fretes - Descontos</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-3 border-l-4 border-l-slate-400">
+                    <div class="flex items-center gap-2 text-slate-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10m14 0v-4a2 2 0 00-2-2h-2a2 2 0 00-2 2v4a2 2 0 002 2h2a2 2 0 002-2zm0 0V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14" /></svg>
+                        <span class="text-xs font-bold uppercase tracking-wider">Faturamento Líquido</span>
+                    </div>
+                    <p class="text-3xl font-bold text-slate-900">R$ ${data.faturamentoLiquido.toFixed(2)}</p>
+                    <p class="text-[10px] text-slate-400 font-medium">Apenas Produtos - Descontos</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-brand-100 shadow-md space-y-3 border-l-4 border-l-brand-500 bg-brand-50/10">
+                    <div class="flex items-center gap-2 text-brand-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                        <span class="text-xs font-bold uppercase tracking-wider">Lucro Líquido</span>
+                    </div>
+                    <p class="text-3xl font-bold text-brand-600">R$ ${data.lucroLiquido.toFixed(2)}</p>
+                    <p class="text-[10px] text-brand-600/60 font-medium">Líquido - CMV Total</p>
+                </div>
+            `;
+
+            // Top 5 Produtos por Lucratividade
+            const topProducts = Object.values(data.productStats)
+                .sort((a, b) => b.lucro - a.lucro)
+                .slice(0, 5);
+
+            document.getElementById('perf-top-products').innerHTML = topProducts.map((p, i) => `
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                    <div class="flex items-center gap-4">
+                        <span class="w-8 h-8 flex items-center justify-center bg-white rounded-full text-xs font-bold text-slate-400 shadow-sm">${i + 1}</span>
+                        <div>
+                            <p class="text-sm font-bold text-slate-900">${p.nome}</p>
+                            <p class="text-[10px] text-slate-400 font-medium">${p.qty} unidades vendidas</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-brand-600">R$ ${p.lucro.toFixed(2)}</p>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Margem Total</p>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-center py-10 text-slate-400 text-sm">Nenhum dado no período</p>';
+
+            // Distribuição de CMV
+            const totalCMVVal = Object.values(data.cmvByCategory).reduce((a, b) => a + b, 0);
+            document.getElementById('perf-cmv-dist').innerHTML = Object.entries(data.cmvByCategory).map(([cat, val]) => {
+                const percent = totalCMVVal > 0 ? (val / totalCMVVal * 100) : 0;
+                const labels = { 'doces': 'Doces', 'doces-6': 'Doces', 'papinhas-6': '6 Meses', 'papinhas-8': '8 Meses', 'comidinhas-12': '12 Meses' };
+                return `
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-bold">
+                            <span class="text-slate-600">${labels[cat]}</span>
+                            <span class="text-slate-900">R$ ${val.toFixed(2)} (${percent.toFixed(1)}%)</span>
+                        </div>
+                        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-brand-500 transition-all duration-1000" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderReports() {
+            const period = document.getElementById('report-period').value;
+            const startInput = document.getElementById('date-start').value;
+            const endInput = document.getElementById('date-end').value;
+
+            let startDate, endDate;
+            const now = new Date();
+
+            if (period === 'today') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            } else if (period === 'week') {
+                const day = now.getDay();
+                const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Ajuste para segunda-feira
+                startDate = new Date(now.setDate(diff));
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date();
+                endDate.setHours(23, 59, 59, 999);
+            } else if (period === 'month') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            } else if (period === 'custom') {
+                if (!startInput || !endInput) return;
+                startDate = new Date(startInput);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(endInput);
+                endDate.setHours(23, 59, 59, 999);
+            }
+
+            // Filtrar pedidos por data e status (ignorar cancelados)
+            const filtered = orders.filter(o => {
+                const date = new Date(o.created_at);
+                return date >= startDate && date <= endDate && o.status === 'confirmado';
+            });
+
+            const data = calculateFinancialData(filtered);
+
+            // Render KPIs (iFood Style)
+            document.getElementById('report-kpis').innerHTML = `
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
+                    <div class="flex items-center gap-2 text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Valor em Produtos</span>
+                    </div>
+                    <p class="text-lg font-bold text-slate-900">R$ ${data.totalProducts.toFixed(2)}</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
+                    <div class="flex items-center gap-2 text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Taxas de Entrega</span>
+                    </div>
+                    <p class="text-lg font-bold text-slate-900">R$ ${data.totalShipping.toFixed(2)}</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
+                    <div class="flex items-center gap-2 text-red-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6" /></svg>
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Descontos</span>
+                    </div>
+                    <p class="text-lg font-bold text-red-500">-R$ ${data.totalDiscounts.toFixed(2)}</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2 bg-slate-50/50">
+                    <div class="flex items-center gap-2 text-slate-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10m14 0v-4a2 2 0 00-2-2h-2a2 2 0 00-2 2v4a2 2 0 002 2h2a2 2 0 002-2zm0 0V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14" /></svg>
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Faturamento Bruto</span>
+                    </div>
+                    <p class="text-lg font-bold text-slate-900">R$ ${data.faturamentoBruto.toFixed(2)}</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2 bg-slate-50/50">
+                    <div class="flex items-center gap-2 text-slate-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Faturamento Líquido</span>
+                    </div>
+                    <p class="text-lg font-bold text-slate-900">R$ ${data.faturamentoLiquido.toFixed(2)}</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-brand-100 shadow-md space-y-2 bg-brand-50/30">
+                    <div class="flex items-center gap-2 text-brand-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Lucro Líquido</span>
+                    </div>
+                    <p class="text-xl font-bold text-brand-600">R$ ${data.lucroLiquido.toFixed(2)}</p>
+                </div>
+            `;
+
+            // Gráfico Semanal
+            renderWeeklyChart(filtered);
+
+            // Top 5 Produtos
+            renderTopProducts(filtered);
+
+            // Ranking de Clientes
+            renderTopCustomers(filtered);
+        }
+
+        function renderWeeklyChart() {
+            const chartContainer = document.getElementById('chart-weekly');
+            const legendContainer = document.getElementById('chart-legend');
+            if (!chartContainer || !legendContainer) return;
+
+            // Datas de referência (Semana atual: Segunda a Domingo)
+            const now = new Date();
+            const dayOfWeek = now.getDay(); // 0 (Dom) a 6 (Sab)
+            // Ajuste para que Segunda seja o primeiro dia (1) e Domingo o último (7 ou 0)
+            const diffToMonday = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek;
+            
+            const currentMon = new Date(now);
+            currentMon.setDate(now.getDate() + diffToMonday);
+            currentMon.setHours(0,0,0,0);
+            
+            const prevMon = new Date(currentMon);
+            prevMon.setDate(currentMon.getDate() - 7);
+            
+            const currentWeekData = new Array(7).fill(0);
+            const prevWeekData = new Array(7).fill(0);
+            const dayNames = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
+
+            orders.filter(o => o.status !== 'cancelado').forEach(o => {
+                const d = new Date(o.created_at);
+                const val = Number(o.total);
+                
+                // Verifica se está na semana atual
+                const diffCurrent = Math.floor((d.getTime() - currentMon.getTime()) / (1000 * 60 * 60 * 24));
+                if (diffCurrent >= 0 && diffCurrent < 7) {
+                    currentWeekData[diffCurrent] += val;
+                }
+                
+                // Verifica se está na semana anterior
+                const diffPrev = Math.floor((d.getTime() - prevMon.getTime()) / (1000 * 60 * 60 * 24));
+                if (diffPrev >= 0 && diffPrev < 7) {
+                    prevWeekData[diffPrev] += val;
+                }
+            });
+
+            const max = Math.max(...currentWeekData, ...prevWeekData, 100);
+            
+            // Renderizar Legenda
+            legendContainer.innerHTML = `
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2.5 h-2.5 bg-brand-500 rounded-sm"></div>
+                    <span class="text-slate-500">Semana Atual</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <div class="w-2.5 h-2.5 bg-red-400 rounded-sm"></div>
+                    <span class="text-slate-500">Semana Anterior</span>
+                </div>
+            `;
+
+            // Renderizar Barras
+            let barsHtml = '';
+            const points = []; // Para a linha da semana atual
+
+            for (let i = 0; i < 7; i++) {
+                const hCurrent = (currentWeekData[i] / max) * 100;
+                const hPrev = (prevWeekData[i] / max) * 100;
+                
+                // Ponto para a linha (centro do grupo de barras)
+                points.push({ x: (i * 14.28) + 7.14, y: 100 - hCurrent });
+
+                barsHtml += `
+                    <div class="flex-1 flex flex-col items-center gap-3 group relative h-full">
+                        <div class="flex-1 w-full flex items-end justify-center gap-1 px-1">
+                            <!-- Barra Semana Anterior -->
+                            <div class="w-1/2 bg-red-50 rounded-t-md relative group/bar-prev h-full flex items-end">
+                                <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover/bar-prev:opacity-100 transition-opacity whitespace-nowrap z-30">
+                                    Ant: R$ ${prevWeekData[i].toFixed(2)}
+                                </div>
+                                <div class="w-full bg-red-400 rounded-t-md transition-all duration-1000" style="height: ${hPrev}%"></div>
+                            </div>
+                            <!-- Barra Semana Atual -->
+                            <div class="w-1/2 bg-brand-50 rounded-t-md relative group/bar-curr h-full flex items-end">
+                                <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] px-2 py-1 rounded opacity-0 group-hover/bar-curr:opacity-100 transition-opacity whitespace-nowrap z-30">
+                                    Atual: R$ ${currentWeekData[i].toFixed(2)}
+                                </div>
+                                <div class="w-full bg-brand-500 rounded-t-md transition-all duration-1000" style="height: ${hCurrent}%"></div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">${dayNames[i]}</span>
+                    </div>
+                `;
+            }
+
+            // Gerar a linha SVG (overlay)
+            const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+            const svgLine = `
+                <svg class="absolute inset-0 w-full h-[calc(100%-24px)] pointer-events-none z-10" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path d="${pathData}" fill="none" stroke="rgba(101, 163, 13, 0.2)" stroke-width="3" stroke-linecap="round" />
+                    <path d="${pathData}" fill="none" stroke="#4d7c0f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    ${points.map(p => `<circle cx="${p.x}" cy="${p.y}" r="1.2" fill="#4d7c0f" />`).join('')}
+                </svg>
+            `;
+
+            chartContainer.innerHTML = svgLine + barsHtml;
+        }
+
+        function renderTopProducts(filtered) {
+            const container = document.getElementById('top-products');
+            const productSales = {};
+
+            filtered.forEach(o => {
+                o.itens.forEach(item => {
+                    productSales[item.nome] = (productSales[item.nome] || 0) + item.qty;
+                });
+            });
+
+            const sorted = Object.entries(productSales)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            if (sorted.length === 0) {
+                container.innerHTML = '<p class="text-center py-10 text-slate-300 text-xs font-bold">Sem dados no período</p>';
+                return;
+            }
+
+            container.innerHTML = sorted.map(([name, qty], i) => `
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-lg bg-white flex items-center justify-center text-[10px] font-bold text-slate-400 border border-slate-100">${i + 1}</span>
+                        <span class="text-sm font-bold text-slate-700">${name}</span>
+                    </div>
+                    <span class="bg-brand-50 text-brand-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">${qty} vendidos</span>
+                </div>
+            `).join('');
+        }
+
+        function renderTopCustomers(filtered) {
+            const container = document.getElementById('top-customers');
+            if (!container) return;
+
+            const customerStats = {};
+
+            filtered.forEach(o => {
+                const name = o.cliente_nome || 'Cliente não identificado';
+                if (!customerStats[name]) {
+                    customerStats[name] = {
+                        count: 0,
+                        total: 0
+                    };
+                }
+                customerStats[name].count += 1;
+                customerStats[name].total += (Number(o.total) + Number(o.taxa_entrega || 0) - Number(o.desconto || 0));
+            });
+
+            const sorted = Object.entries(customerStats)
+                .sort((a, b) => b[1].count - a[1].count)
+                .slice(0, 5);
+
+            if (sorted.length === 0) {
+                container.innerHTML = '<p class="text-center py-10 text-slate-300 text-xs font-bold">Sem dados no período</p>';
+                return;
+            }
+
+            container.innerHTML = sorted.map(([name, stats], i) => `
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-lg bg-white flex items-center justify-center text-[10px] font-bold text-slate-400 border border-slate-100">${i + 1}</span>
+                        <div class="flex flex-col">
+                            <span class="text-sm font-bold text-slate-700 truncate max-w-[120px]">${name}</span>
+                            <span class="text-[10px] text-slate-400 font-medium">${stats.count} pedidos</span>
+                        </div>
+                    </div>
+                    <span class="text-brand-600 text-xs font-bold">R$ ${stats.total.toFixed(2)}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderNeighborhoodHeatmap(filtered) {
+            const container = document.getElementById('neighborhood-heatmap');
+            const neighborhoods = {};
+
+            filtered.forEach(o => {
+                if (o.cliente_endereco.includes('Balneário Camboriú') || o.cliente_bairro) {
+                    const b = o.cliente_bairro || 'Outros';
+                    neighborhoods[b] = (neighborhoods[b] || 0) + 1;
+                }
+            });
+
+            const sorted = Object.entries(neighborhoods)
+                .sort((a, b) => b[1] - a[1]);
+
+            if (sorted.length === 0) {
+                container.innerHTML = '<p class="text-center py-10 text-slate-300 text-xs font-bold col-span-full">Sem dados no período</p>';
+                return;
+            }
+
+            container.innerHTML = sorted.map(([name, count]) => `
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
+                    <span class="text-xs font-bold text-slate-600">${name}</span>
+                    <span class="text-xs font-bold text-brand-600">${count} pedidos</span>
+                </div>
+            `).join('');
+        }
+
+        function exportToCSV() {
+            const period = document.getElementById('report-period').value;
+            const startInput = document.getElementById('date-start').value;
+            const endInput = document.getElementById('date-end').value;
+
+            let startDate, endDate;
+            const now = new Date();
+
+            if (period === 'today') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            } else if (period === 'week') {
+                const day = now.getDay();
+                const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+                startDate = new Date(now.setDate(diff));
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date();
+                endDate.setHours(23, 59, 59, 999);
+            } else if (period === 'month') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            } else if (period === 'custom') {
+                if (!startInput || !endInput) return;
+                startDate = new Date(startInput);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(endInput);
+                endDate.setHours(23, 59, 59, 999);
+            }
+
+            const filtered = orders.filter(o => {
+                const date = new Date(o.created_at);
+                return date >= startDate && date <= endDate && o.status !== 'cancelado';
+            });
+
+            let csv = 'Código,Data,Cliente,Telefone,Bairro,Subtotal,Taxa,Desconto,Total,Status\n';
+            filtered.forEach(o => {
+                const sub = Number(o.total);
+                const taxa = Number(o.taxa_entrega || 0);
+                const desc = Number(o.desconto || 0);
+                const total = sub + taxa - desc;
+                csv += `${o.codigo},${new Date(o.created_at).toLocaleDateString()},"${o.cliente_nome}",${o.cliente_telefone},"${o.cliente_bairro}",${sub},${taxa},${desc},${total},${o.status}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `relatorio-vendas-${period}-${new Date().toLocaleDateString()}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function renderOrders() {
+            const { data } = await sb
+                .from('pedidos')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            const allOrders = data || [];
+            
+            // Filtrar cancelados
+            const filteredOrders = allOrders.filter(o => o.status !== 'cancelado');
+
+            // Atualiza o contador global sem tocar som (o som é controlado pelo checkNewOrders)
+            lastOrderCount = filteredOrders.length;
+
+            orders = allOrders; // Mantém todos os pedidos no estado global para outras funções (como imprimir)
+            
+            const pendentes = filteredOrders.filter(o => o.status === 'pendente');
+            const preparando = filteredOrders.filter(o => o.status === 'preparando');
+            const confirmados = filteredOrders.filter(o => o.status === 'confirmado').slice(0, 10);
+
+            const pendentesContainer = document.getElementById('orders-pendentes');
+            const preparandoContainer = document.getElementById('orders-preparando');
+            const confirmadosContainer = document.getElementById('orders-confirmados');
+            
+            if (!pendentesContainer || !preparandoContainer || !confirmadosContainer) return;
+
+            document.getElementById('count-pendentes').innerText = pendentes.length;
+            document.getElementById('count-preparando').innerText = preparando.length;
+            document.getElementById('count-confirmados').innerText = confirmados.length;
+
+            const renderCard = (p) => {
+                const subtotal = Number(p.total);
+                const taxa = Number(p.taxa_entrega || 0);
+                const desc = Number(p.desconto || 0);
+                const totalFinal = subtotal + taxa - desc;
+
+                const statusColors = {
+                    'pendente': 'bg-orange-100 text-orange-600',
+                    'preparando': 'bg-blue-100 text-blue-600',
+                    'confirmado': 'bg-green-100 text-green-600'
+                };
+
+                return `
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 space-y-4 animate-fadeIn">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-bold text-base text-slate-900">${p.codigo}</div>
+                            <div class="text-sm text-slate-500 font-medium">${p.cliente_nome} ${p.cliente_telefone ? `(${p.cliente_telefone})` : ''}</div>
+                        </div>
+                        <div class="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${statusColors[p.status] || 'bg-slate-100 text-slate-600'}">
+                            ${p.status}
+                        </div>
+                    </div>
+
+                    <div class="text-xs text-slate-400 font-medium bg-slate-50 p-3 rounded-xl">
+                        <div class="flex items-center gap-2 mb-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            ${p.cliente_endereco} ${p.cliente_bairro ? ` - ${p.cliente_bairro}` : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            ${p.agendamento || 'A combinar'}
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-50">
+                        <span class="text-xs font-bold text-slate-400">Total</span>
+                        <span class="text-base font-bold text-brand-600">R$ ${totalFinal.toFixed(2)}</span>
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="verDetalhes('${p.id}')" 
+                            class="flex-1 bg-slate-100 text-slate-600 py-2.5 rounded-xl text-[10px] font-bold hover:bg-slate-200 transition-all">
+                            Detalhes
+                        </button>
+                        ${p.status === 'pendente' ? `
+                            <button onclick="prepararPedido('${p.id}')" 
+                                class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-[10px] font-bold shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all">
+                                Preparar
+                            </button>
+                        ` : ''}
+                        ${p.status === 'pendente' || p.status === 'preparando' ? `
+                            <button onclick="confirmarPedido('${p.id}')" 
+                                class="flex-1 bg-brand-600 text-white py-2.5 rounded-xl text-[10px] font-bold shadow-lg shadow-brand-600/20 hover:bg-brand-700 transition-all">
+                                Confirmar
+                            </button>
+                        ` : ''}
+                        <button onclick="imprimirPedido('${p.id}')" 
+                            class="bg-slate-100 text-slate-600 p-2.5 rounded-xl hover:bg-slate-200 transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        </button>
+                    </div>
+                </div>`;
+            };
+
+            pendentesContainer.innerHTML = pendentes.length ? pendentes.map(renderCard).join('') : '<div class="text-center py-10 text-slate-300 text-xs font-bold">Nenhum pedido pendente</div>';
+            preparandoContainer.innerHTML = preparando.length ? preparando.map(renderCard).join('') : '<div class="text-center py-10 text-slate-300 text-xs font-bold">Nenhum pedido em preparo</div>';
+            confirmadosContainer.innerHTML = confirmados.length ? confirmados.map(renderCard).join('') : '<div class="text-center py-10 text-slate-300 text-xs font-bold">Nenhum pedido confirmado</div>';
+        }
+
+        function verDetalhes(id) {
+            const p = orders.find(o => o.id === id);
+            if (!p) return;
+
+            const subtotal = Number(p.total);
+            const taxa = Number(p.taxa_entrega || 0);
+            const desc = Number(p.desconto || 0);
+            const totalFinal = subtotal + taxa - desc;
+
+            const itemsHtml = p.itens.map(item => `
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-bold text-slate-700">${item.qty}x ${item.nome}</span>
+                        <span class="text-sm font-bold text-slate-900">R$ ${(item.preco * item.qty).toFixed(2)}</span>
+                    </div>
+                    ${item.subitens && item.subitens.length > 0 ? `
+                        <div class="pl-4 space-y-0.5">
+                            ${item.subitens.map(s => `
+                                <p class="text-[11px] text-slate-400 font-medium">• ${s.qty}x ${s.nome}</p>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            document.getElementById('modal-content').innerHTML = `
+                <div class="flex justify-between items-center mb-8 border-b border-slate-50 pb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Detalhes do Pedido</h2>
+                        <p class="text-xs text-slate-400 font-medium mt-1">Código: #${p.codigo}</p>
+                    </div>
+                    <button onclick="document.getElementById('modal').classList.add('hidden')" class="p-2 text-slate-400 hover:text-slate-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-slate-50 p-5 rounded-2xl space-y-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-brand-600 shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cliente</p>
+                                <p class="text-sm font-bold text-slate-900">${p.cliente_nome} ${p.cliente_telefone ? `(${p.cliente_telefone})` : ''}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-brand-600 shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Endereço</p>
+                                <p class="text-sm font-bold text-slate-900">${p.cliente_endereco} ${p.cliente_bairro ? ` - ${p.cliente_bairro}` : ''}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-brand-600 shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Agendamento</p>
+                                <p class="text-sm font-bold text-slate-900">${p.agendamento || 'A combinar'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Itens do Pedido</h4>
+                        <div class="space-y-2">
+                            ${itemsHtml}
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-2xl space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block tracking-widest">Taxa de Entrega</label>
+                                <input id="taxa-${p.id}" type="number" step="0.01" value="${taxa}" class="w-full bg-white p-3 rounded-xl outline-none font-bold text-sm border border-slate-200">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block tracking-widest">Desconto</label>
+                                <input id="desc-${p.id}" type="number" step="0.01" value="${desc}" class="w-full bg-white p-3 rounded-xl outline-none font-bold text-sm border border-slate-200">
+                            </div>
+                        </div>
+                        <button onclick="atualizarValores('${p.id}')" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-xs">Atualizar Valores</button>
+                    </div>
+
+                    <div class="bg-brand-50 p-5 rounded-2xl flex justify-between items-center">
+                        <span class="text-lg font-bold text-slate-900">Total Final</span>
+                        <span class="text-2xl font-bold text-brand-600">R$ ${totalFinal.toFixed(2)}</span>
+                    </div>
+
+                    <button onclick="copyOrderToWhatsApp('${p.id}')" class="w-full bg-green-500 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-green-500/20 hover:bg-green-600 transition-all flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.554 4.189 1.605 6.006L0 24l6.163-1.617a11.831 11.831 0 005.883 1.565h.005c6.637 0 12.032-5.396 12.035-12.03a11.799 11.799 0 00-3.526-8.511"/></svg>
+                        Copiar para WhatsApp
+                    </button>
+
+                    <div class="flex gap-3">
+                        ${p.status === 'pendente' ? `
+                            <button onclick="prepararPedido('${p.id}')" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold">Preparar Pedido</button>
+                            <button onclick="cancelarPedido('${p.id}')" class="flex-1 bg-red-50 text-red-600 py-4 rounded-2xl font-bold">Cancelar Pedido</button>
+                        ` : ''}
+                        ${p.status === 'preparando' ? `
+                            <button onclick="confirmarPedido('${p.id}')" class="flex-1 bg-brand-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-brand-600/20">Confirmar Pagamento</button>
+                            <button onclick="cancelarPedido('${p.id}')" class="flex-1 bg-red-50 text-red-600 py-4 rounded-2xl font-bold">Cancelar Pedido</button>
+                        ` : ''}
+                    </div>
+                </div>`;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        async function atualizarValores(id) {
+            const taxa = parseFloat(document.getElementById(`taxa-${id}`).value) || 0;
+            const desc = parseFloat(document.getElementById(`desc-${id}`).value) || 0;
+
+            const { error } = await sb.from('pedidos')
+                .update({ taxa_entrega: taxa, desconto: desc })
+                .eq('id', id);
+
+            if (error) {
+                alert("Erro ao atualizar valores.");
+                console.error(error);
+            } else {
+                alert("Valores atualizados com sucesso!");
+                await renderOrders();
+                // Re-render details to update the copy button data
+                verDetalhes(id);
+            }
+        }
+
+        function copyOrderToWhatsApp(id) {
+            const p = orders.find(o => o.id === id);
+            if (!p) return;
+
+            const subtotal = Number(p.total);
+            const taxa = Number(p.taxa_entrega || 0);
+            const desc = Number(p.desconto || 0);
+            const totalFinal = subtotal + taxa - desc;
+
+            const itemsText = p.itens.map(i => {
+                let itemStr = `* ${i.qty}x ${i.nome}`;
+                if (i.subitens && i.subitens.length > 0) {
+                    const subLines = i.subitens.map(s => ` - ${s.qty}x ${s.nome}`).join('\n');
+                    itemStr += `\n${subLines}`;
+                }
+                return itemStr;
+            }).join('\n');
+
+            const text = `PEDIDO CONFIRMADO - BEBÊ BISTRÔ
+Código: ${p.codigo}
+Cliente: ${p.cliente_nome}
+Telefone: ${p.cliente_telefone || 'N/A'}
+Entrega: ${p.cliente_endereco}
+Bairro: ${p.cliente_bairro || 'N/A'}
+Agendamento: ${p.agendamento || 'A combinar'}
+Itens:
+${itemsText}
+Subtotal: R$ ${subtotal.toFixed(2)}
+Taxa de Entrega: R$ ${taxa.toFixed(2)}
+Total: R$ ${totalFinal.toFixed(2)}`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Texto do pedido copiado para a área de transferência!");
+            }).catch(err => {
+                console.error('Erro ao copiar:', err);
+                alert("Erro ao copiar texto.");
+            });
+        }
+
+        async function prepararPedido(id) {
+            try {
+                const { error } = await sb.from('pedidos').update({ status: 'preparando' }).eq('id', id);
+                if (error) throw error;
+                document.getElementById('modal').classList.add('hidden');
+                renderOrders();
+            } catch (e) {
+                alert("Erro ao atualizar status.");
+                console.error(e);
+            }
+        }
+
+        async function confirmarPedido(id) {
+            const order = orders.find(o => o.id === id);
+            if (!order) return;
+
+            try {
+                // 1. Baixar estoque manualmente (RPC com erro de UUID)
+                for (const item of order.itens) {
+                    // Baixa do item principal
+                    const { data: prod, error: fetchError } = await sb.from('produtos').select('estoque').eq('id', item.id).single();
+                    if (fetchError) throw fetchError;
+                    if (prod) {
+                        const { error: updateError } = await sb.from('produtos').update({ estoque: prod.estoque - item.qty }).eq('id', item.id);
+                        if (updateError) throw updateError;
+                    }
+
+                    // Baixa dos sub-itens (se for combo)
+                    if (item.subitens && Array.isArray(item.subitens)) {
+                        for (const sub of item.subitens) {
+                            const { data: subProd, error: subFetchError } = await sb.from('produtos').select('estoque').eq('id', sub.id).single();
+                            if (subFetchError) throw subFetchError;
+                            if (subProd) {
+                                const { error: subUpdateError } = await sb.from('produtos').update({ estoque: subProd.estoque - (sub.qty * item.qty) }).eq('id', sub.id);
+                                if (subUpdateError) throw subUpdateError;
+                            }
+                        }
+                    }
+                }
+
+                // 2. Atualizar status do pedido
+                const { error: statusError } = await sb.from('pedidos').update({ status: 'confirmado' }).eq('id', id);
+                if (statusError) throw statusError;
+
+                alert("Pedido confirmado e estoque atualizado.");
+                document.getElementById('modal').classList.add('hidden');
+                renderOrders();
+            } catch (error) {
+                console.error("Erro ao confirmar pedido:", error);
+                alert("Erro ao processar baixa de estoque: " + (error.message || "Erro desconhecido"));
+            }
+        }
+
+        async function cancelarPedido(id) {
+            if (!confirm('Tem certeza que deseja cancelar este pedido?')) return;
+            const { error } = await sb.from('pedidos').update({ status: 'cancelado' }).eq('id', id);
+
+            if (error) {
+                alert("Erro ao cancelar pedido.");
+                console.error(error);
+                return;
+            }
+
+            alert("Pedido cancelado com sucesso.");
+            document.getElementById('modal').classList.add('hidden');
+            renderOrders();
+            init();
+        }
+
+        function viewOrder(id) {
+            const order = orders.find(o => o.id === id);
+            if (!order) return;
+
+            const subtotal = Number(order.total);
+            const taxa = Number(order.taxa_entrega || 0);
+            const desc = Number(order.desconto || 0);
+            const totalFinal = subtotal + taxa - desc;
+
+            const itemsHtml = order.itens.map(item => `
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-slate-700">${item.qty}x ${item.nome}</span>
+                    <span class="text-sm font-bold text-slate-900">R$ ${(item.preco * item.qty).toFixed(2)}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('modal-content').innerHTML = `
+                <div class="flex justify-between items-center mb-10 border-b border-slate-50 pb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Detalhes do Pedido</h2>
+                        <p class="text-xs text-slate-400 font-medium mt-1">Código: #${order.codigo}</p>
+                    </div>
+                    <button onclick="closeModal()" class="p-3 bg-slate-50 rounded-2xl text-slate-400 hover:text-slate-600 transition-all">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Cliente</h3>
+                        <p class="font-bold text-slate-900">${order.cliente_nome}</p>
+                        <p class="text-sm text-slate-700">${order.cliente_endereco}</p>
+                    </div>
+                    <div>
+                        <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Itens</h3>
+                        <div class="space-y-3">${itemsHtml}</div>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-4 rounded-2xl space-y-2">
+                        <div class="flex justify-between text-xs font-bold text-slate-500">
+                            <span>Subtotal:</span>
+                            <span>R$ ${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between text-xs font-bold text-slate-500">
+                            <span>Taxa de Entrega:</span>
+                            <span>R$ ${taxa.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between text-xs font-bold text-red-500">
+                            <span>Desconto:</span>
+                            <span>- R$ ${desc.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-slate-200">
+                            <span class="text-lg font-bold text-slate-900">Total Final</span>
+                            <span class="text-lg font-bold text-brand-600">R$ ${totalFinal.toFixed(2)}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button onclick="imprimirPedido('${order.id}')" class="flex-1 bg-slate-900 text-white py-5 rounded-2xl font-bold shadow-xl shadow-slate-900/10 mt-6">Imprimir Recibo</button>
+                        <button onclick="updateOrderStatus(${order.id}, 'concluido')" class="flex-1 gradient-btn text-white py-5 rounded-2xl font-bold shadow-xl shadow-brand-600/20 mt-6">Concluir Pedido</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function imprimirPedido(id) {
+            const p = orders.find(o => o.id === id);
+            if (!p) return;
+
+            const subtotal = Number(p.total);
+            const taxa = Number(p.taxa_entrega || 0);
+            const desc = Number(p.desconto || 0);
+            const totalFinal = subtotal + taxa - desc;
+
+            const win = window.open('', '_blank');
+            
+            const itemsHtml = p.itens.map(i => {
+                let html = `
+                    <div style="margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; font-weight: 900; font-size: 15px;">
+                            <div style="flex: 1; display: flex; align-items: flex-start;">
+                                <span style="min-width: 10mm; display: inline-block;">${i.qty}x</span>
+                                <span style="flex: 1; text-transform: uppercase;">${i.nome}</span>
+                            </div>
+                            <span style="margin-left: 5px; white-space: nowrap;">R$ ${(i.preco * i.qty).toFixed(2)}</span>
+                        </div>
+                `;
+
+                if (i.subitens && i.subitens.length > 0) {
+                    html += i.subitens.map(sub => `
+                        <div style="margin-left: 10mm; font-size: 14px; font-weight: 700; margin-top: 6px; line-height: 1.2; text-transform: uppercase;">
+                            - ${sub.qty}x ${sub.nome}
+                        </div>
+                    `).join('');
+                }
+
+                html += `</div>`;
+                return html;
+            }).join('');
+
+            win.document.write(`
+                <html>
+                    <head>
+                        <style>
+                            @page { size: 80mm auto; margin: 0; }
+                            body { 
+                                margin: 0; 
+                                padding: 5mm 10mm 5mm 6mm; 
+                                font-family: Arial, Helvetica, sans-serif; 
+                                font-size: 14px; 
+                                font-weight: 700;
+                                width: 64mm; 
+                                line-height: 1.1;
+                                color: #000;
+                            }
+                            .center { text-align: center; }
+                            .bold { font-weight: 900; }
+                            .header { font-size: 20px; margin-bottom: 5px; }
+                            .divider { border-top: 2px dashed #000; margin: 8px 0; }
+                            .total-row { display: flex; justify-content: space-between; font-size: 18px; margin-top: 5px; }
+                            .info-row { margin-bottom: 4px; text-transform: uppercase; font-size: 12px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="center divider"></div>
+                        <div class="center bold header">BEBÊ BISTRÔ BC</div>
+                        <div class="center divider"></div>
+                        
+                        <div class="info-row">PEDIDO: ${p.codigo}</div>
+                        <div class="info-row">DATA: ${new Date(p.created_at).toLocaleString('pt-BR')}</div>
+                        <div class="info-row">CLIENTE: ${p.cliente_nome} ${p.cliente_telefone ? `(${p.cliente_telefone})` : ''}</div>
+                        <div class="info-row">ENDEREÇO: ${p.cliente_endereco} ${p.cliente_bairro ? ` - ${p.cliente_bairro}` : ''}</div>
+                        <div class="info-row">AGENDAMENTO: ${p.agendamento || 'A COMBINAR'}</div>
+                        
+                        <div class="divider"></div>
+                        <div class="bold" style="margin-bottom: 8px; font-size: 12px;">ITENS DO PEDIDO:</div>
+                        ${itemsHtml}
+                        
+                        <div class="divider"></div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span>SUBTOTAL:</span>
+                            <span>R$ ${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span>TAXA ENTREGA:</span>
+                            <span>R$ ${taxa.toFixed(2)}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span>DESCONTO:</span>
+                            <span>- R$ ${desc.toFixed(2)}</span>
+                        </div>
+                        
+                        <div class="divider"></div>
+                        <div class="total-row bold">
+                            <span>TOTAL:</span>
+                            <span>R$ ${totalFinal.toFixed(2)}</span>
+                        </div>
+                        <div class="divider"></div>
+                        
+                        <div class="center bold" style="margin-top: 10px; font-size: 12px;">
+                            OBRIGADO POR ESCOLHER BEBÊ BISTRÔ!
+                        </div>
+                        <div style="height: 30px;"></div>
+                    </body>
+                </html>
+            `);
+            win.document.close();
+            setTimeout(() => {
+                win.print();
+                win.close();
+            }, 500);
+        }
+
+        async function updateOrderStatus(id, status) {
+            const { error } = await sb.from('pedidos').update({ status: status }).eq('id', id);
+            if (!error) {
+                closeModal();
+                init();
+            } else {
+                console.error("Erro ao atualizar status:", error);
+                alert("Erro ao atualizar status: " + (error.message || "Erro desconhecido"));
+            }
+        }
+
+        function showDetailedFinancialReport() {
+            const period = document.getElementById('report-period').value;
+            const startInput = document.getElementById('date-start').value;
+            const endInput = document.getElementById('date-end').value;
+
+            let startDate, endDate;
+            const now = new Date();
+
+            if (period === 'today') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+            } else if (period === 'week') {
+                const day = now.getDay();
+                const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+                startDate = new Date(now.setDate(diff));
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date();
+                endDate.setHours(23, 59, 59, 999);
+            } else if (period === 'month') {
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            } else if (period === 'custom') {
+                if (!startInput || !endInput) {
+                    alert('Selecione as datas para o período personalizado.');
+                    return;
+                }
+                startDate = new Date(startInput);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(endInput);
+                endDate.setHours(23, 59, 59, 999);
+            }
+
+            const filtered = orders.filter(o => {
+                const date = o.status === 'confirmado' ? new Date(o.updated_at || o.created_at) : new Date(o.created_at);
+                return date >= startDate && date <= endDate && o.status === 'confirmado';
+            });
+
+            if (filtered.length === 0) {
+                alert('Nenhum pedido CONFIRMADO encontrado para o período selecionado.');
+                return;
+            }
+
+            let totalGeral = 0;
+            const rowsHtml = filtered.map((o, index) => {
+                const subtotal = Number(o.total);
+                const taxa = Number(o.taxa_entrega || 0);
+                const desc = Number(o.desconto || 0);
+                const total = subtotal + taxa - desc;
+                totalGeral += total;
+
+                const dateToDisplay = o.status === 'confirmado' ? (o.updated_at || o.created_at) : o.created_at;
+
+                return `
+                    <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td class="px-4 py-3 text-[10px] font-bold text-slate-400">${index + 1}</td>
+                        <td class="px-4 py-3 text-xs font-bold text-slate-900">#${o.codigo}</td>
+                        <td class="px-4 py-3 text-xs text-slate-600">${new Date(dateToDisplay).toLocaleDateString()}</td>
+                        <td class="px-4 py-3 text-xs text-slate-700 font-medium">${o.cliente_nome}</td>
+                        <td class="px-4 py-3 text-xs text-slate-900 font-bold">R$ ${subtotal.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-xs text-slate-900 font-bold">R$ ${taxa.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-xs text-brand-600 font-bold">R$ ${total.toFixed(2)}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('modal-content').innerHTML = `
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">Relatório Detalhado</h2>
+                        <p class="text-xs text-slate-400 font-medium mt-1">Período: ${period === 'custom' ? `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}` : period.toUpperCase()}</p>
+                    </div>
+                    <button onclick="closeModal()" class="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-slate-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto -mx-10 px-10">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                                <th class="px-4 py-3">#</th>
+                                <th class="px-4 py-3">Código</th>
+                                <th class="px-4 py-3">Data</th>
+                                <th class="px-4 py-3">Cliente</th>
+                                <th class="px-4 py-3">Produtos</th>
+                                <th class="px-4 py-3">Frete</th>
+                                <th class="px-4 py-3">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-slate-900 text-white">
+                                <td colspan="6" class="px-4 py-4 text-sm font-bold text-right">TOTAL GERAL:</td>
+                                <td class="px-4 py-4 text-sm font-bold">R$ ${totalGeral.toFixed(2)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+            
+            // Ajustar largura do modal para esse relatório
+            const modalContainer = document.getElementById('modal-content');
+            modalContainer.classList.remove('max-w-2xl');
+            modalContainer.classList.add('max-w-4xl');
+            
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() { 
+            const modalContainer = document.getElementById('modal-content');
+            modalContainer.classList.remove('max-w-4xl');
+            modalContainer.classList.add('max-w-2xl');
+            document.getElementById('modal').classList.add('hidden'); 
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (file.size > 2 * 1024 * 1024) {
+                alert("Arquivo muito grande! O limite é 2MB.");
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const container = document.getElementById('m-preview-container');
+                container.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function uploadImage(file) {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const filePath = fileName;
+
+            const { data, error } = await sb.storage
+                .from('fotos-produtos')
+                .upload(filePath, file);
+
+            if (error) throw error;
+
+            const { data: { publicUrl } } = sb.storage
+                .from('fotos-produtos')
+                .getPublicUrl(filePath);
+
+            return publicUrl;
+        }
+
+        async function save(idx) {
+            const p = products[idx];
+            const fileInput = document.getElementById('m-file');
+            const file = fileInput ? fileInput.files[0] : null;
+            let imageUrl = document.getElementById('m-img-url').value;
+
+            try {
+                if (file) {
+                    imageUrl = await uploadImage(file);
+                }
+
+                const unit = sessionStorage.getItem('admin_unit') || 'bc';
+                const updates = { 
+                    id: p.id,
+                    unidade: unit,
+                    nome: document.getElementById('m-nome').value, 
+                    preco: parseFloat(document.getElementById('m-preco').value), 
+                    estoque: parseInt(document.getElementById('m-estoque').value),
+                    peso: document.getElementById('m-peso').value,
+                    ingredientes: document.getElementById('m-ingredientes').value,
+                    categoria: document.getElementById('m-cat').value,
+                    imagem_url: imageUrl
+                };
+                
+                const { error } = await sb.from('produtos').upsert(updates);
+                
+                if (error) throw error;
+                
+                closeModal(); 
+                init(); 
+            } catch (error) {
+                console.error("Erro ao salvar:", error);
+                alert("Erro ao salvar: " + (error.message || "Erro desconhecido"));
+            }
+        }
+
+        if (sessionStorage.getItem('auth') === '1') init();
+    </script>
+</body>
+</html>
