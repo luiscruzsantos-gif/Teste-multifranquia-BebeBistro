@@ -335,6 +335,11 @@ async function init() {
     }
 
     try {
+        const hTitle = document.getElementById('header-title');
+        const hSubtitle = document.getElementById('header-subtitle');
+        if (hTitle) hTitle.innerText = state.unidade === 'blu' ? 'Bebe Bistrô Blumenau' : 'Bebe Bistrô Balneário Camboriú';
+        if (hSubtitle) hSubtitle.innerText = 'Papinhas e Comidinhas Naturais Congeladas';
+
         state.configs = await ConfigRepository.getConfigs(state.unidade);
         if (state.configs) {
             state.hours.semana = state.configs.find((c: any) => c.key === 'horario_semana')?.value || '09:00 - 18:00';
@@ -574,7 +579,7 @@ async function send() {
         
         const msg = `NOVO PEDIDO - BEBÊ BISTRÔ (${state.unidade === 'blu' ? 'Blumenau' : 'BC'})%0ACódigo: ${codigo}%0ACliente: ${a.nome}%0ATelefone: ${a.telefone}%0AEntrega: ${a.rua}${a.complemento ? ', ' + a.complemento : ''}%0ACidade: ${a.cidade}%0ABairro: ${a.bairro}%0AAgendamento: ${agendamento}%0AItens:%0A${lines}%0A%0ASubtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}%0ATaxa de Entrega: R$ ${taxaEntrega.toFixed(2).replace('.', ',')}%0ATotal: R$ ${totalFinal.toFixed(2).replace('.', ',')}`;
         
-        const whatsappNumber = state.unidade === 'blu' ? '5547999999999' : '5547997335500'; // TODO: Update Blumenau number
+        const whatsappNumber = state.unidade === 'blu' ? '5547999999999' : '5547997335500'; 
         const url = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${msg}`;
         state.cart = [];
         saveCart();
@@ -703,6 +708,8 @@ function renderMenu(container: HTMLElement) {
                             const cartItem = state.cart.find((c: any) => c.id === p.id);
                             const isCombo = p.categoria === 'combos';
                             
+                            const whatsappNumber = state.unidade === 'blu' ? '5547999999999' : '5547997335500';
+                            
                             return `
                             <div class="product-card bg-white rounded-4xl border border-slate-100 overflow-hidden flex flex-col shadow-sm relative">
                                 ${isNew ? '<span class="absolute top-4 left-4 z-10 bg-brand-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">✨ NOVIDADE</span>' : ''}
@@ -730,7 +737,7 @@ function renderMenu(container: HTMLElement) {
                                         
                                         ${isCombo ? `
                                             ${p.estoque <= 0 ? `
-                                                <button onclick="window.location.href='https://api.whatsapp.com/send?phone=5547997335500&text=Tenho%20interesse%20no%20produto%20${encodeURIComponent(p.nome)},%20avise-me%20quando%20chegar.'"
+                                                <button onclick="window.location.href='https://api.whatsapp.com/send?phone=${whatsappNumber}&text=Tenho%20interesse%20no%20produto%20${encodeURIComponent(p.nome)},%20avise-me%20quando%20chegar.'"
                                                     class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl font-bold text-[10px] leading-tight hover:bg-slate-200 transition-all">
                                                     Avise-me quando chegar
                                                 </button>
@@ -750,7 +757,7 @@ function renderMenu(container: HTMLElement) {
                                                     </div>
                                                 ` : `
                                                     ${p.estoque <= 0 ? `
-                                                        <button onclick="window.location.href='https://api.whatsapp.com/send?phone=5547997335500&text=Tenho%20interesse%20no%20produto%20${encodeURIComponent(p.nome)},%20avise-me%20quando%20chegar.'"
+                                                        <button onclick="window.location.href='https://api.whatsapp.com/send?phone=${whatsappNumber}&text=Tenho%20interesse%20no%20produto%20${encodeURIComponent(p.nome)},%20avise-me%20quando%20chegar.'"
                                                             class="bg-slate-100 text-slate-500 px-4 py-3 rounded-2xl font-bold text-[10px] leading-tight hover:bg-slate-200 transition-all">
                                                             Avise-me quando chegar
                                                         </button>
