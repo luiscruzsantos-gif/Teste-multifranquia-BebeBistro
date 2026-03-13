@@ -665,17 +665,38 @@ function renderMenu(container: HTMLElement) {
 
     if (state.activeCat === 'todos') {
         const order = ['combos', 'doces-6', 'papinhas-6', 'papinhas-8', 'comidinhas-12'];
+        
+        // Primeiro, adiciona as categorias na ordem definida
         order.forEach(catId => {
             const cat = CATEGORIES.find(c => c.id === catId);
             let items = normalizedProducts.filter((p: any) => p.categoria === catId);
-            if (catId === 'comidinhas-12') {
-                items.sort((a: any, b: any) => {
+            if (items.length > 0 && cat) sections.push({ title: cat.label, items });
+        });
+
+        // Depois, adiciona qualquer outra categoria que tenha produtos e não esteja na ordem
+        const otherCats = [...new Set(normalizedProducts.map((p: any) => p.categoria))]
+            .filter(catId => !order.includes(catId));
+        
+        otherCats.forEach(catId => {
+            const cat = CATEGORIES.find(c => c.id === catId);
+            let items = normalizedProducts.filter((p: any) => p.categoria === catId);
+            if (items.length > 0) {
+                sections.push({ 
+                    title: cat ? cat.label : (catId.charAt(0).toUpperCase() + catId.slice(1)), 
+                    items 
+                });
+            }
+        });
+
+        // Ordenação específica para comidinhas-12 em qualquer seção que a contenha
+        sections.forEach(section => {
+            if (section.title.toLowerCase().includes('1 a 3 anos') || section.title.toLowerCase().includes('comidinhas')) {
+                section.items.sort((a: any, b: any) => {
                     const numA = parseInt(a.nome.match(/\d+/)?.[0] || '0');
                     const numB = parseInt(b.nome.match(/\d+/)?.[0] || '0');
                     return numA - numB;
                 });
             }
-            if (items.length > 0 && cat) sections.push({ title: cat.label, items });
         });
     } else {
         const cat = CATEGORIES.find(c => c.id === state.activeCat);
@@ -691,7 +712,21 @@ function renderMenu(container: HTMLElement) {
     }
     
     if (sections.length === 0) {
-        container.innerHTML = `<div class="max-w-7xl mx-auto px-4 py-20 text-center"><p class="text-slate-400 font-bold">Nenhum produto encontrado nesta categoria.</p><button onclick="state.activeCat='todos'; render();" class="mt-4 text-brand-600 font-bold underline">Ver todos os produtos</button></div>`;
+        container.innerHTML = `
+            <div class="max-w-7xl mx-auto px-4 py-24 text-center animate-slideUp">
+                <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8 text-slate-200">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 11v10l8 4" />
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-900 mb-3">Nenhum produto encontrado</h3>
+                <p class="text-slate-500 mb-10 max-w-md mx-auto">Não encontramos itens nesta categoria no momento. Que tal dar uma olhadinha em todo o nosso cardápio?</p>
+                <button onclick="state.activeCat='todos'; render();" 
+                    class="gradient-btn text-white px-10 py-4 rounded-2xl font-bold shadow-xl shadow-brand-500/20 hover:scale-105 transition-transform">
+                    Ver todos os produtos
+                </button>
+            </div>
+        `;
         return;
     }
 
