@@ -83,9 +83,10 @@ async function init() {
         if (loginOverlay) loginOverlay.style.display = 'none';
         if (mainAdmin) mainAdmin.style.display = 'block';
         
-        products = await ProductRepository.getProducts();
-        configs = await ConfigRepository.getConfigs();
-        orders = await OrderRepository.getOrders();
+        const unit = sessionStorage.getItem('admin_unit') || 'bc';
+        products = await ProductRepository.getProducts(unit);
+        configs = await ConfigRepository.getConfigs(unit);
+        orders = await OrderRepository.getOrders(unit);
 
         render();
         renderConfigs();
@@ -99,7 +100,8 @@ async function init() {
                 checkNewOrders();
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'produtos' }, async () => {
-                products = await ProductRepository.getProducts();
+                const unit = sessionStorage.getItem('admin_unit') || 'bc';
+            products = await ProductRepository.getProducts(unit);
                 render();
             })
             .subscribe();
@@ -118,7 +120,8 @@ async function init() {
 
 async function checkNewOrders() {
     try {
-        const newOrders = await OrderRepository.getOrders();
+        const unit = sessionStorage.getItem('admin_unit') || 'bc';
+        const newOrders = await OrderRepository.getOrders(unit);
         const activeOrders = newOrders.filter((o: any) => o.status === 'pendente');
         
         if (lastOrderCount !== -1 && activeOrders.length > lastOrderCount) {
@@ -461,11 +464,12 @@ async function confirmarPedido(id: string) {
     if (!order) return;
 
     try {
+        const unit = sessionStorage.getItem('admin_unit') || 'bc';
         for (const item of order.itens) {
-            await OrderRepository.baixarEstoque(item.id, item.qty);
+            await OrderRepository.baixarEstoque(item.id, item.qty, unit);
             if (item.subitens && Array.isArray(item.subitens)) {
                 for (const sub of item.subitens) {
-                    await OrderRepository.baixarEstoque(sub.id, sub.qty * item.qty);
+                    await OrderRepository.baixarEstoque(sub.id, sub.qty * item.qty, unit);
                 }
             }
         }
@@ -549,7 +553,8 @@ async function save(idx: number) {
     };
     
     try {
-        await ProductRepository.updateProduct(p.id, updates);
+        const unit = sessionStorage.getItem('admin_unit') || 'bc';
+        await ProductRepository.updateProduct(p.id, updates, unit);
         closeModal();
         init();
     } catch (e) {
@@ -563,7 +568,8 @@ async function updateStock(idx: number, delta: number) {
     if (newStock === p.estoque) return;
     
     try {
-        await ProductRepository.updateProduct(p.id, { estoque: newStock });
+        const unit = sessionStorage.getItem('admin_unit') || 'bc';
+        await ProductRepository.updateProduct(p.id, { estoque: newStock }, unit);
         p.estoque = newStock;
         render();
     } catch (e) {

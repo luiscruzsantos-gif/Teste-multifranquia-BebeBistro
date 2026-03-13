@@ -266,8 +266,8 @@
 
     <script>
         const MASTER = '10203040Bella';
-        const SUPABASE_URL = 'https://yckinvfnyyxvfdysjrwe.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2ludmZueXl4dmZkeXNqcndlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MTIzNzQsImV4cCI6MjA4NzA4ODM3NH0.D9m-iDskrB1WvLx7DtfEO4ihHKGDtDJSuMnee3wTzSQ';
+        const SUPABASE_URL = 'https://svvtmjdyjrvznrfskbvy.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2dnRtamR5anJ2em5yZnNrYnZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNTQwMTksImV4cCI6MjA4ODgzMDAxOX0.shXtVq0O8d0GONbW8HRxo6sWtZpR_bmdqrs206nEA9Y';
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let products = [];
@@ -1614,23 +1614,24 @@ Total: R$ ${totalFinal.toFixed(2)}`;
             if (!order) return;
 
             try {
-                // 1. Baixar estoque manualmente (RPC com erro de UUID)
+                const unit = sessionStorage.getItem('admin_unit') || 'bc';
+                // 1. Baixar estoque manualmente
                 for (const item of order.itens) {
                     // Baixa do item principal
-                    const { data: prod, error: fetchError } = await sb.from('produtos').select('estoque').eq('id', item.id).single();
+                    const { data: prod, error: fetchError } = await sb.from('produtos').select('estoque').eq('id', item.id).eq('unidade', unit).single();
                     if (fetchError) throw fetchError;
                     if (prod) {
-                        const { error: updateError } = await sb.from('produtos').update({ estoque: prod.estoque - item.qty }).eq('id', item.id);
+                        const { error: updateError } = await sb.from('produtos').update({ estoque: prod.estoque - item.qty }).eq('id', item.id).eq('unidade', unit);
                         if (updateError) throw updateError;
                     }
 
                     // Baixa dos sub-itens (se for combo)
                     if (item.subitens && Array.isArray(item.subitens)) {
                         for (const sub of item.subitens) {
-                            const { data: subProd, error: subFetchError } = await sb.from('produtos').select('estoque').eq('id', sub.id).single();
+                            const { data: subProd, error: subFetchError } = await sb.from('produtos').select('estoque').eq('id', sub.id).eq('unidade', unit).single();
                             if (subFetchError) throw subFetchError;
                             if (subProd) {
-                                const { error: subUpdateError } = await sb.from('produtos').update({ estoque: subProd.estoque - (sub.qty * item.qty) }).eq('id', sub.id);
+                                const { error: subUpdateError } = await sb.from('produtos').update({ estoque: subProd.estoque - (sub.qty * item.qty) }).eq('id', sub.id).eq('unidade', unit);
                                 if (subUpdateError) throw subUpdateError;
                             }
                         }

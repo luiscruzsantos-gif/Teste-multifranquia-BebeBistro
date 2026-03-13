@@ -87,6 +87,12 @@ export const state: any = {
 // Attach functions to window for HTML access
 (window as any).state = state;
 (window as any).selectUnit = selectUnit;
+(window as any).showUnitModal = showUnitModal;
+
+function showUnitModal() {
+    const modal = document.getElementById('unit-modal');
+    if (modal) modal.classList.remove('hidden');
+}
 (window as any).addToCart = addToCart;
 (window as any).removeFromCart = removeFromCart;
 (window as any).updateQty = updateQty;
@@ -309,11 +315,12 @@ function closeCombo() {
 }
 
 function selectUnit(unit: string) {
+    console.log('Selecionando unidade:', unit);
     localStorage.setItem('unidade', unit);
     state.unidade = unit;
     
     // Ajusta a cidade padrão se necessário
-    if (state.address.cidade === 'Balneário Camboriú' || state.address.cidade === 'Blumenau') {
+    if (state.address.cidade === 'Balneário Camboriú' || state.address.cidade === 'Blumenau' || !state.address.cidade) {
         state.address.cidade = unit === 'blu' ? 'Blumenau' : 'Balneário Camboriú';
         saveAddress();
     }
@@ -321,11 +328,12 @@ function selectUnit(unit: string) {
     const modal = document.getElementById('unit-modal');
     if (modal) modal.classList.add('hidden');
     
-    // Recarrega os dados para a unidade selecionada
-    init();
+    // Recarrega a página para garantir que todo o estado seja reiniciado corretamente
+    window.location.reload();
 }
 
 async function init() {
+    console.log('Iniciando aplicação para unidade:', state.unidade);
     const modal = document.getElementById('unit-modal');
     if (!state.unidade) {
         if (modal) modal.classList.remove('hidden');
@@ -356,6 +364,7 @@ async function init() {
         }
 
         const db = await ProductRepository.getProducts(state.unidade);
+        console.log('Produtos carregados:', db?.length);
         state.products = (db || []).map((p: any) => ({ ...p, displayImg: driveImg(p.imagem_url, 300) }));
         
         render();

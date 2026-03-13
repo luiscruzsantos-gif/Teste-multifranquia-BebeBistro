@@ -42,13 +42,23 @@ export const OrderRepository = {
         return data;
     },
 
-    async baixarEstoque(prodId, qty) {
-        // Busca estoque atual
-        const { data: prod, error: fetchError } = await sb.from('produtos').select('estoque').eq('id', prodId).single();
+    async baixarEstoque(prodId, qty, unidade) {
+        // Busca estoque atual filtrando por unidade
+        const { data: prod, error: fetchError } = await sb
+            .from('produtos')
+            .select('estoque')
+            .eq('id', prodId)
+            .eq('unidade', unidade)
+            .single();
         if (fetchError) throw fetchError;
         if (prod) {
-            // Atualiza estoque
-            const { data, error } = await sb.from('produtos').update({ estoque: prod.estoque - qty }).eq('id', prodId).select();
+            // Atualiza estoque filtrando por unidade
+            const { data, error } = await sb
+                .from('produtos')
+                .update({ estoque: prod.estoque - qty })
+                .eq('id', prodId)
+                .eq('unidade', unidade)
+                .select();
             if (error) throw error;
             return data;
         }
@@ -63,8 +73,13 @@ export const ProductRepository = {
         return data;
     },
 
-    async updateProduct(id, updates) {
-        const { data, error } = await sb.from('produtos').update(updates).eq('id', id).select();
+    async updateProduct(id, updates, unidade) {
+        const { data, error } = await sb
+            .from('produtos')
+            .update(updates)
+            .eq('id', id)
+            .eq('unidade', unidade)
+            .select();
         if (error) throw error;
         return data;
     }
