@@ -54,7 +54,7 @@ const DELIVERY_CONFIG: any = {
 
 // State management
 export const state: any = {
-    unidade: localStorage.getItem('unidade') || null,
+    unidade: sessionStorage.getItem('unidade') || null,
     products: [],
     cart: JSON.parse(localStorage.getItem('cart') || '[]'),
     configs: [],
@@ -65,7 +65,7 @@ export const state: any = {
     address: (() => {
         try {
             const saved = JSON.parse(localStorage.getItem('address') || '{}');
-            const unidade = localStorage.getItem('unidade');
+            const unidade = sessionStorage.getItem('unidade');
             return { 
                 nome: saved.nome || '', 
                 telefone: saved.telefone || '',
@@ -78,7 +78,7 @@ export const state: any = {
                 combinar: false 
             };
         } catch (e) {
-            const unidade = localStorage.getItem('unidade');
+            const unidade = sessionStorage.getItem('unidade');
             return { nome: '', telefone: '', rua: '', bairro: '', complemento: '', cidade: (unidade === 'blu' ? 'Blumenau' : 'Balneário Camboriú'), data: '', horario: '', combinar: false };
         }
     })()
@@ -316,7 +316,7 @@ function closeCombo() {
 
 function selectUnit(unit: string) {
     console.log('Selecionando unidade:', unit);
-    localStorage.setItem('unidade', unit);
+    sessionStorage.setItem('unidade', unit);
     state.unidade = unit;
     
     // Ajusta a cidade padrão se necessário

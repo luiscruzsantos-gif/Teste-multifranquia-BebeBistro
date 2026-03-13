@@ -62,6 +62,13 @@
                 <button onclick="setActiveTab('performance')" id="tab-performance" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all">Performance</button>
                 <button onclick="setActiveTab('configs')" id="tab-configs" class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all">Configurações</button>
                 
+                <div class="w-px h-6 bg-slate-200 mx-2"></div>
+
+                <button onclick="logout()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-brand-600 hover:bg-brand-50 transition-all" title="Trocar Unidade">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                    Trocar Loja
+                </button>
+
                 <button onclick="toggleSound()" id="btn-sound" class="p-2.5 text-slate-400 hover:bg-slate-100 rounded-xl transition-all" title="Notificação Sonora">
                     <svg id="icon-sound-on" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
                     <svg id="icon-sound-off" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
@@ -777,9 +784,12 @@
             
             if (lastOrderCount !== -1 && count > lastOrderCount && soundEnabled) {
                 orderSound.play().catch(e => console.log("Erro ao tocar som:", e));
-                // Se estiver na aba de pedidos, atualiza a lista
-                if (activeTab === 'orders') renderOrders();
-                if (activeTab === 'reports') renderReports();
+                // Se estiver na aba de pedidos ou relatórios, atualiza os dados
+                if (activeTab === 'orders' || activeTab === 'reports' || activeTab === 'performance') {
+                    await renderOrders();
+                    if (activeTab === 'reports') renderReports();
+                    if (activeTab === 'performance') renderPerformanceReport();
+                }
             }
             lastOrderCount = count;
         }
@@ -1328,9 +1338,11 @@
         }
 
         async function renderOrders() {
+            const unit = sessionStorage.getItem('admin_unit') || 'bc';
             const { data } = await sb
                 .from('pedidos')
                 .select('*')
+                .eq('unidade', unit)
                 .order('created_at', { ascending: false });
 
             const allOrders = data || [];
